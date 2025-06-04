@@ -5,7 +5,7 @@
 **一、通过openwrt路由器来控制某电脑只能访问白名单**
 
 1. 目录openwrt中的auto_sub_lookup.sh,用于在openwrt防火墙中生成下面两个文件：
-    
+   
     ```
     /etc/luci-uploads/
         ipv4.txt
@@ -13,7 +13,7 @@
     ```
     
 2. 通过修改auto_sub_lookup.sh中的DOMAINS变量中的域名来调整域名白名单：
-    
+   
     ```
     DOMAINS="luogu.com.cn
         kpcb.org.cn
@@ -52,11 +52,13 @@
     cron.xml            打开“任务计划程序”，导入cron.xml文件即可
 
 **三、使用方法：**
-    如果只是在本机开白名单域名，不用/openwrt目录下的脚本。
+
+​    如果只是在本机开白名单域名，不必用/openwrt目录下的脚本。
+
 1. 将整个文件夹复制到windows下d盘根目录下，取名firewall_cron。
 2. 打开“任务计划程序”，导入cron.xml文件即可，如果文件不是放在d:\firewall_cron，则需要修改“任务计划程序”中的启动脚本所在路径。
 3. 包含上面的文件夹要设置成系统或隐藏模式，避免功亏一篑！
-    
+   
     ```
     attrib +s +h d:\firewall_cron
     ```
@@ -64,7 +66,7 @@
 ​	如果使用openwrt，则将auto_sub_lookup.sh复制到/root并运行，待其生成ipv4.txt和ipv6.txt后设置防火墙策略...
 1. cp auto_sub_lookup.sh /root && chmod a+x auto_sub_lookup.sh
 2. ./auto_sub_lookup.sh
-3. 设置防火墙ipset。包含/etc/luci-uploads/ipv4.txt 和/etc/luci-uploads/ipv6.txt
+3. 设置防火墙ipset，包含/etc/luci-uploads/ipv4.txt 和/etc/luci-uploads/ipv6.txt
 4. 设置防火墙白名单策略
 
 
