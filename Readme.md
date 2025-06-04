@@ -16,9 +16,9 @@
     
 3. 通过在openwrt firewall4中设置ipset包含ipv4.txt和ipv6.txt，然后设置防火墙策略来实现只能访问白名单的功能。
 
-    ![image-20250604161355497](D:\firewall_cron\openwrt\openwrt_ipset.png)
+    ![image-20250604161355497](.\openwrt\openwrt_ipset.png)
 
-    ![image-20250604161505642](D:\firewall_cron\openwrt\openwrt_firewall.png)
+    ![image-20250604161505642](.\openwrt\openwrt_firewall.png)
 
 **二、在本机（windows11）中设置防火墙**
 
