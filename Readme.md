@@ -95,9 +95,9 @@ This program consists of two parts:
 
    ```
    DOMAINS="luogu.com.cn
-   	kpcb.org.cn
-   	oj.wlhcode.com
-   	oj.wwwos.net"
+        kpcb.org.cn
+        oj.wlhcode.com
+        oj.wwwos.net"
    ```
 
 3. Configure firewall4 in OpenWrt to use `ipset` to include `ipv4.txt` and `ipv6.txt`, then apply firewall rules to allow only access to these whitelisted domains.
