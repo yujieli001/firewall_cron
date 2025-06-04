@@ -1,0 +1,26 @@
+Windows Registry Editor Version 5.00
+
+;==============================
+; 1. 删除“设置”中隐藏防火墙的 SettingsPageVisibility
+;==============================
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer]
+"SettingsPageVisibility"=-
+
+;==============================
+; 2. 恢复经典“控制面板” NameSpace 下的防火墙 GUID（如果先前创建过才需要恢复，否则忽略）
+;==============================
+; 下面一行如果此前从未创建过，不影响实际效果
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ControlPanel\NameSpace\{4026492F-2F69-46B8-B9BF-5654FC07E423}]
+
+;==============================
+; 3. 删除所有用户（HKLM）下的 HideNamedControlItems（恢复控制面板显示）
+;==============================
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer]
+"HideNamedControlItems"=-
+
+;==============================
+; 4. 删除当前用户（HKCU）下的 DisallowRun 及 HideNamedControlItems（恢复运行 wf.msc 和显示防火墙）
+;==============================
+[HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer]
+"DisallowRun"=-
+"HideNamedControlItems"=-

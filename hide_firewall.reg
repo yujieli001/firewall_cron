@@ -1,0 +1,35 @@
+Windows Registry Editor Version 5.00
+
+;==============================
+; 1. 在“设置”应用中隐藏“防火墙 & 网络保护”页面
+;    通过 SettingsPageVisibility 实现，隐藏标识符：WindowsFirewallNetworkProtection
+;    【引用见】turn1search0、turn1search3
+;==============================
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer]
+"SettingsPageVisibility"="hide:WindowsFirewallNetworkProtection"
+
+;==============================
+; 2. 在经典“控制面板”中彻底隐藏“Windows Defender 防火墙”入口
+;    a. 删除 NameSpace 下对应 GUID（隐藏后，控制面板 → 系统和安全 不会显示防火墙）
+;    b. 通过 HideNamedControlItems（REG_MULTI_SZ）隐藏核心 CPL 名称
+;==============================
+
+; 2a. 删除经典 Control Panel Namespace 的 GUID 键（如果之前创建过，此处将其去除。若尚未创建可忽略此段。）
+[-HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ControlPanel\NameSpace\{4026492F-2F69-46B8-B9BF-5654FC07E423}]
+
+; 2b. 对所有用户（HKLM）隐藏经典“防火墙”控制面板项目
+;    HideNamedControlItems 为 REG_MULTI_SZ，需要列出：
+;      1) MicrosoftWindowsFirewall.cpl
+;      2) Windows Defender Firewall
+;==============================
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer]
+"HideNamedControlItems"=hex(7):4d,00,69,00,63,00,72,00,6f,00,73,00,6f,00,66,00,74,00,57,00,69,00,6e,00,64,00,6f,00,77,00,73,00,46,00,69,00,72,00,65,00,77,00,61,00,6c,00,6c,00,2e,00,63,00,70,00,6c,00,00,00,57,00,69,00,6e,00,64,00,6f,00,77,00,73,00,20,00,44,00,65,00,66,00,65,00,6e,00,64,00,65,00,72,00,20,00,46,00,69,00,72,00,65,00,77,00,61,00,6c,00,6c,00,00,00,00,00
+
+;==============================
+; 3. 对当前用户（HKCU）隐藏“防火墙”项目，并禁止通过 wf.msc 打开
+;    a. DisallowRun = 1（启用“禁止运行指定程序”）
+;    b. HideNamedControlItems（同样 REG_MULTI_SZ）隐藏 CPL
+;==============================
+[HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer]
+"DisallowRun"=dword:00000001
+"HideNamedControlItems"=hex(7):4d,00,69,00,63,00,72,00,6f,00,73,00,6f,00,66,00,74,00,57,00,69,00,6e,00,64,00,6f,00,77,00,73,00,46,00,69,00,72,00,65,00,77,00,61,00,6c,00,6c,00,2e,00,63,00,70,00,6c,00,00,00,57,00,69,00,6e,00,64,00,6f,00,77,00,73,00,20,00,44,00,65,00,66,00,65,00,6e,00,64,00,65,00,72,00,20,00,46,00,69,00,72,00,65,00,77,00,61,00,6c,00,6c,00,00,00,00,00
