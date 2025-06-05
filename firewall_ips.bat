@@ -1,8 +1,7 @@
 @echo off
-@echo 正在收集DNS信息...
-@powershell -ExecutionPolicy Bypass -File "%~dp0dns2ips.ps1"
+:: 静默运行 dns2ips.ps1
+powershell -WindowStyle Hidden -ExecutionPolicy Bypass -File "%~dp0dns2ips.ps1" >nul 2>&1
 
-@echo 正在启用防火墙...
-@powershell -ExecutionPolicy Bypass -Command "Start-Process powershell -ArgumentList '-ExecutionPolicy Bypass -File \"%~dp0allow_ips.ps1\"' -Verb RunAs"
-
-@echo 操作完成！
+:: 以管理员权限静默运行 allow_ips.ps1
+powershell -WindowStyle Hidden -ExecutionPolicy Bypass -Command ^
+  "Start-Process powershell -ArgumentList '-WindowStyle Hidden -ExecutionPolicy Bypass -File \"%~dp0allow_ips.ps1\"' -Verb RunAs" >nul 2>&1
