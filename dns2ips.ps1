@@ -1,8 +1,10 @@
 $DOMAINS = @(
     "luogu.com.cn",
     "kpcb.org.cn",
-    "oj.wlhcode.com",
+    "wlhcode.com",
     "oj.wwwos.net",
+    "ccf.org.cn",
+    "noi.cn",
     "nbyg.net"
 )
 

@@ -3,14 +3,14 @@
   <RegistrationInfo>
     <Date>2025-06-04T11:00:00</Date>
     <Author>Administrator</Author>
-    <Description>åœ¨å¼€æœºæˆ–ç™»å½•æ—¶è¿è¡Œ D:\firewall_cron\firewall_ips.bat</Description>
+    <Description>ÔÚ¿ª»ú»òµÇÂ¼Ê±ÔËĞĞ D:\firewall_cron\firewall_ips.bat</Description>
   </RegistrationInfo>
   <Triggers>
-    <!-- å¼€æœºè§¦å‘å™¨ -->
+    <!-- ¿ª»ú´¥·¢Æ÷ -->
     <BootTrigger>
       <Enabled>true</Enabled>
     </BootTrigger>
-    <!-- ç™»å½•è§¦å‘å™¨ï¼ˆç³»ç»Ÿå”¤é†’è§£é”åä¹Ÿå¯è§¦å‘ï¼‰ -->
+    <!-- µÇÂ¼´¥·¢Æ÷£¨ÏµÍ³»½ĞÑ½âËøºóÒ²¿É´¥·¢£© -->
     <LogonTrigger>
       <Enabled>true</Enabled>
     </LogonTrigger>

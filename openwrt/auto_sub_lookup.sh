@@ -1,50 +1,70 @@
 cat > auto_sub_lookup.sh <<'EOF'
 #!/bin/sh
 
-DOMAINS="luogu.com.cn
+# 主域名
+DOMAINS="
+luogu.com.cn
 kpcb.org.cn
-oj.wlhcode.com
+ccf.org.cn"
+
+# 创建输出目录并清空上次结果
+mkdir -p /etc/luci-uploads
+> dns_sub.txt
+> /etc/luci-uploads/ipv4.txt
+> /etc/luci-uploads/ipv6.txt
+
+# 强制添加的子域名
+cat <<EOF2 >> dns_sub.txt
 oj.wwwos.net
-nbyg.net"
+oj.wlhcode.com
+ygoj.wwwos.net
+wp.wwwos.net
+gesp.ccf.org.cn
+ceic.kpcb.org.cn
+g.alicdn.com
+EOF2
 
-echo "[*] 正在从 crt.sh 获取子域名列表..."
+echo "[*] 开始从 crt.sh 获取多个域名的子域名并解析 IP ..."
 
-# 清空结果文件
-> ipv4.txt
-> ipv6.txt
+for DOMAIN in $DOMAINS; do
+    echo $DOMAIN >> dns_sub.txt
+    echo "[*] 获取 ${DOMAIN} 的子域名列表..."
 
-for BASE_DOMAIN in $DOMAINS; do
-	# 获取所有包含子域名的字段并提取
-	echo ${BASE_DOMAIN}>luogu_subs.txt
-	curl -s "https://crt.sh/?q=%25.${BASE_DOMAIN}&output=json"|\
-	grep -oE "\"name_value\":\"[^\"]+\"" | \
-	sed 's/"name_value":"//;s/"//'|\
-	sed 's/\\n/\n/g'|\
-	sort -u >>luogu_subs.txt
-	total=$(wc -l < luogu_subs.txt)
+    # 获取 crt.sh 的 JSON 内容
+    RESP=$(curl -s --max-time 10 "https://crt.sh/?q=%25.${DOMAIN}&output=json")
+    if [ -z "$RESP" ]; then
+        echo "[-] 获取 $DOMAIN 子域名失败，跳过..."
+        continue
+    fi
 
-	echo "[*] 共获取到 $total 个子域名，开始解析 IP..."
-
-	# 遍历子域名解析 IP
-	i=0
-	while read domain; do
-	    i=$((i+1))
-		for ip in $(nslookup "$domain" 2>/dev/null | awk '/^Address: / {print $2}'); do
-			echo "当前 IP 是：$ip"
-			if [ -n "$ip" ]; then
-				echo "$domain -> $ip" # | tee -a "$OUT_FILE"
-				if echo "$ip" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'; then
-					echo "$ip" >> ipv4.txt
-				elif echo "$ip" | grep -q ':'; then
-					echo "$ip" >> ipv6.txt
-				fi
-			fi   
-		done
-	done < luogu_subs.txt
+    echo "$RESP" | grep -oE '"name_value":"[^"]+"' | \
+        sed 's/"name_value":"//;s/"//' | \
+        sed 's/\\n/\n/g' >> dns_sub.txt
 done
-#sort -u ipv4.txt -o ipv4.txt.tmp && mv ipv4.txt.tmp ipv4.txt
-#sort -u ipv6.txt -o ipv6.txt.tmp && mv ipv6.txt.tmp ipv6.txt
 
-echo "[*] 已保存解析结果到 luogu_subs.txt"
+# 去重子域名
+sort -u dns_sub.txt > /tmp/dns_sub_tmp.txt && mv /tmp/dns_sub_tmp.txt dns_sub.txt
+
+total=$(wc -l < dns_sub.txt)
+echo "[*] 共获取到 $total 个子域名，开始解析 IP ..."
+
+i=0
+while read domain; do
+    i=$((i+1))
+    for ip in $(nslookup "$domain" 2>/dev/null | awk '/^Address: / {print $2}'); do
+        if [ -n "$ip" ]; then
+            if echo "$ip" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'; then
+                echo "$ip" >> /etc/luci-uploads/ipv4.txt
+            elif echo "$ip" | grep -q ':'; then
+                echo "$ip" >> /etc/luci-uploads/ipv6.txt
+            fi
+        fi
+    done
+    echo "    [$i/$total] $domain 解析完毕"
+    sleep 1
+done < dns_sub.txt
+
+sort -u /etc/luci-uploads/ipv4.txt > /tmp/ipv4_tmp.txt && mv /tmp/ipv4_tmp.txt /etc/luci-uploads/ipv4.txt
+sort -u /etc/luci-uploads/ipv6.txt > /tmp/ipv6_tmp.txt && mv /tmp/ipv6_tmp.txt /etc/luci-uploads/ipv6.txt
 
 EOF
