@@ -43,7 +43,7 @@
            "oj.wwwos.net"
        )
 
-2. 为了防止儿子使用防火墙功能破解上面的白名单现在，通过修改注册表来实现防火墙设置功能的隐藏
+2. 为了防止儿子使用防火墙功能破解上面的白名单，通过修改注册表来实现防火墙设置功能的隐藏
     hide_firewall.reg   隐藏防火墙，windows11下双击该文件，选yes即可
     rest_firewall.reg   恢复防火墙，windows11下双击该文件，选yes即可
 
@@ -53,7 +53,14 @@
 
 **三、使用方法：**
 
-​    如果只是在本机开白名单域名，不必用/openwrt目录下的脚本。
+​	如果使用openwrt家庭路由器，则将auto_sub_lookup.sh复制到/root并运行，待其生成ipv4.txt和ipv6.txt后设置防火墙策略...
+
+1. cp auto_sub_lookup.sh /root && chmod a+x auto_sub_lookup.sh
+2. ./auto_sub_lookup.sh
+3. 设置防火墙ipset，包含/etc/luci-uploads/ipv4.txt 和/etc/luci-uploads/ipv6.txt
+4. 设置防火墙白名单策略
+
+​	如果只是在本机开白名单域名，不必用/openwrt目录下的脚本。
 
 1. 将整个文件夹复制到windows下d盘根目录下，取名firewall_cron。
 2. 打开“任务计划程序”，导入cron.xml文件即可，如果文件不是放在d:\firewall_cron，则需要修改“任务计划程序”中的启动脚本所在路径。
@@ -62,12 +69,6 @@
     ```
     attrib +s +h d:\firewall_cron
     ```
-
-​	如果使用openwrt，则将auto_sub_lookup.sh复制到/root并运行，待其生成ipv4.txt和ipv6.txt后设置防火墙策略...
-1. cp auto_sub_lookup.sh /root && chmod a+x auto_sub_lookup.sh
-2. ./auto_sub_lookup.sh
-3. 设置防火墙ipset，包含/etc/luci-uploads/ipv4.txt 和/etc/luci-uploads/ipv6.txt
-4. 设置防火墙白名单策略
 
 
 
@@ -143,19 +144,6 @@ This program consists of two parts:
 
 **Part III: Usage Instructions**
 
-- If you are only enabling whitelist mode on the local machine, you don’t need the scripts under the `/openwrt` directory.
-
-1. Copy the entire folder to the root of drive D: in Windows, and name it `firewall_cron`.
-
-2. Open “Task Scheduler” and import `cron.xml`.
-    If the folder is not located at `d:\firewall_cron`, be sure to modify the script paths in the task scheduler accordingly.
-
-3. To prevent the child from discovering the folder, set it as a system and hidden folder:
-
-   ```
-   attrib +s +h d:\firewall_cron
-   ```
-
 - If using OpenWrt, copy and run `auto_sub_lookup.sh` on the router, then configure the firewall once `ipv4.txt` and `ipv6.txt` are generated:
 
 1. Copy and grant execution permission:
@@ -173,3 +161,16 @@ This program consists of two parts:
 3. Set up firewall `ipset` using `/etc/luci-uploads/ipv4.txt` and `/etc/luci-uploads/ipv6.txt`.
 
 4. Apply firewall rules to allow only whitelisted IPs.
+
+- If you are only enabling whitelist mode on the local machine, you don’t need the scripts under the `/openwrt` directory.
+
+1. Copy the entire folder to the root of drive D: in Windows, and name it `firewall_cron`.
+
+2. Open “Task Scheduler” and import `cron.xml`.
+    If the folder is not located at `d:\firewall_cron`, be sure to modify the script paths in the task scheduler accordingly.
+
+3. To prevent the child from discovering the folder, set it as a system and hidden folder:
+
+   ```
+   attrib +s +h d:\firewall_cron
+   ```
