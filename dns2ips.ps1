@@ -78,7 +78,8 @@ $forcedSubs = @(
     "www.ccf.org.cn",
     "www.kpcb.org.cn",
     "www.luogu.com.cn",
-    "ygoj.wwwos.net"
+    "ygoj.wwwos.net",
+    "comp.webtrncdn.com"
 )
 # 将强制子域名写入 dns_sub.txt
 $forcedSubs | ForEach-Object { Add-Content -Path $dnsFile -Value $_ }
