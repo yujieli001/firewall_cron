@@ -75,6 +75,7 @@ $forcedSubs = @(
     "wp.wwwos.net",
     "ws.class.luogu.com.cn",
     "ws.luogu.com.cn",
+    "api.tsinghuax.com",
     "www.ccf.org.cn",
     "www.kpcb.org.cn",
     "www.luogu.com.cn",

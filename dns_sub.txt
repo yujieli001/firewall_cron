@@ -2,6 +2,7 @@
 *.luogu.com.cn
 acdn-world.luogu.com.cn
 adl.ccf.org.cn
+api.tsinghuax.com
 bsxt.kpcb.org.cn
 ccf.org.cn
 cdn.class.luogu.com.cn
@@ -10,6 +11,7 @@ ceic.kpcb.org.cn
 class.luogu.com.cn
 cncc.ccf.org.cn
 cncc2018.ccf.org.cn
+comp.webtrncdn.com
 conf.ccf.org.cn
 conf2.ccf.org.cn
 csp.ccf.org.cn
@@ -45,7 +47,6 @@ stream-rts.class.luogu.com.cn
 tf.ccf.org.cn
 ti.luogu.com.cn
 video.class.luogu.com.cn
-vpn.nbyg.net
 web.ccf.org.cn
 wp.wwwos.net
 ws.class.luogu.com.cn

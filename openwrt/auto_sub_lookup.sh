@@ -23,6 +23,7 @@ gesp.ccf.org.cn
 ceic.kpcb.org.cn
 g.alicdn.com
 comp.webtrncdn.com
+api.tsinghuax.com
 EOF2
 
 echo "[*] 开始从 crt.sh 获取多个域名的子域名并解析 IP ..."
