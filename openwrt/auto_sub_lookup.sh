@@ -3,10 +3,11 @@ cat > auto_sub_lookup.sh <<'EOF'
 
 # 主域名
 DOMAINS="
-luogu.com.cn
-kpcb.org.cn
-ccf.org.cn
-ai.sh.cn"
+    luogu.com.cn
+    kpcb.org.cn
+    ccf.org.cn
+    ai.sh.cn
+    oss-cn-hangzhou.aliyuncs.com"
 
 # 创建输出目录并清空上次结果
 mkdir -p /etc/luci-uploads

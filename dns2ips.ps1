@@ -9,7 +9,9 @@
 $DOMAINS = @(
     "luogu.com.cn",
     "kpcb.org.cn",
-    "ccf.org.cn"
+    "ccf.org.cn",
+    "iai.sh.cn",
+    "oss-cn-hangzhou.aliyuncs.com"
 )
 
 # 2. 初始化输出目录 + 清空上次结果
