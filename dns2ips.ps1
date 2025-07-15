@@ -26,6 +26,8 @@ Set-Content -Path $ipv6File -Value $null
 
 # 3. 强制添加的子域名（与 shell 脚本保持一致）
 $forcedSubs = @(
+    "codeds.xueersi.com",
+    "vpn.nbyg.net",
     "acdn-world.luogu.com.cn",
     "adl.ccf.org.cn",
     "bsxt.kpcb.org.cn",

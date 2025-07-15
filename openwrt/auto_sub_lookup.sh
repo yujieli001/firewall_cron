@@ -5,7 +5,8 @@ cat > auto_sub_lookup.sh <<'EOF'
 DOMAINS="
 luogu.com.cn
 kpcb.org.cn
-ccf.org.cn"
+ccf.org.cn
+ai.sh.cn"
 
 # 创建输出目录并清空上次结果
 mkdir -p /etc/luci-uploads
@@ -24,6 +25,29 @@ ceic.kpcb.org.cn
 g.alicdn.com
 comp.webtrncdn.com
 api.tsinghuax.com
+www.iai.sh.cn
+vpn.nbyg.net
+luogu.com.cn
+www.luogu.com.cn
+acdn-world.luogu.com.cn
+cdn.class.luogu.com.cn
+cdn.luogu.com.cn
+class.luogu.com.cn
+dewebug.luogu.com.cn
+ecfinal.luogu.com.cn
+errtrack.luogu.com.cn
+fecdn.luogu.com.cn
+help.luogu.com.cn
+icpc.luogu.com.cn
+ipic.luogu.com.cn
+payment.luogu.com.cn
+stream-push.class.luogu.com.cn
+stream-rts.class.luogu.com.cn
+stream.class.luogu.com.cn
+ti.luogu.com.cn
+video.class.luogu.com.cn
+ws.class.luogu.com.cn
+ws.luogu.com.cn
 EOF2
 
 echo "[*] 开始从 crt.sh 获取多个域名的子域名并解析 IP ..."
