@@ -12,7 +12,8 @@ $DOMAINS = @(
     "kpcb.org.cn",
     "ccf.org.cn",
     "oss-cn-hangzhou.aliyuncs.com",
-    "lanqiaoqingshao.cn"
+    "lanqiaoqingshao.cn",
+    "alicdn.com"
 )
 
 # 2. 初始化输出目录 + 清空上次结果
@@ -56,6 +57,9 @@ $forcedSubs = @(
     "fces.ccf.org.cn",
     "fecdn.luogu.com.cn",
     "g.alicdn.com",
+    "o.alicdn.com",
+    "at.alicdn.com",
+    "aeis.alicdn.com",
     "gesp.ccf.org.cn",
     "help.luogu.com.cn",
     "hhme.ccf.org.cn",
@@ -91,7 +95,10 @@ $forcedSubs = @(
     "comp.webtrncdn.com",
     "www.lanqiaoqingshao.cn",
     "api.lanqiaoqingshao.cn",
-    "ynuf.aliapp.org"
+    "oss.lanqiaoqingshao.cn",
+    "ynuf.aliapp.org",
+    "gm.mmstat.com",
+    "oss.stem86.com"
 )
 # 将强制子域名写入 dns_sub.txt
 $forcedSubs | ForEach-Object { Add-Content -Path $dnsFile -Value $_ }
