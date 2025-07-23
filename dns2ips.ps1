@@ -8,10 +8,11 @@
 # 1. 定义主域名数组
 $DOMAINS = @(
     "luogu.com.cn",
+    "iai.sh.cn",
     "kpcb.org.cn",
     "ccf.org.cn",
-    "iai.sh.cn",
-    "oss-cn-hangzhou.aliyuncs.com"
+    "oss-cn-hangzhou.aliyuncs.com",
+    "lanqiaoqingshao.cn"
 )
 
 # 2. 初始化输出目录 + 清空上次结果
@@ -29,7 +30,10 @@ Set-Content -Path $ipv6File -Value $null
 # 3. 强制添加的子域名（与 shell 脚本保持一致）
 $forcedSubs = @(
     "codeds.xueersi.com",
-    "vpn.nbyg.net",
+    "vpn.nbyg.net", 
+    "www.iai.sh.cn",
+    "zhongshi-files.oss-cn-zhangjiakou.aliyuncs.com",
+    "yacs-public.oss-cn-hangzhou.aliyuncs.com",
     "acdn-world.luogu.com.cn",
     "adl.ccf.org.cn",
     "bsxt.kpcb.org.cn",
@@ -84,7 +88,10 @@ $forcedSubs = @(
     "www.kpcb.org.cn",
     "www.luogu.com.cn",
     "ygoj.wwwos.net",
-    "comp.webtrncdn.com"
+    "comp.webtrncdn.com",
+    "www.lanqiaoqingshao.cn",
+    "api.lanqiaoqingshao.cn",
+    "ynuf.aliapp.org"
 )
 # 将强制子域名写入 dns_sub.txt
 $forcedSubs | ForEach-Object { Add-Content -Path $dnsFile -Value $_ }
