@@ -9,6 +9,7 @@
 $DOMAINS = @(
     "luogu.com.cn",
     "iai.sh.cn",
+    "atcoder.jp",
     "kpcb.org.cn",
     "ccf.org.cn",
     "oss-cn-hangzhou.aliyuncs.com",
@@ -30,9 +31,19 @@ Set-Content -Path $ipv6File -Value $null
 
 # 3. 强制添加的子域名（与 shell 脚本保持一致）
 $forcedSubs = @(
+    "edge.microsoft.com",
     "codeds.xueersi.com",
     "vpn.nbyg.net", 
     "www.iai.sh.cn",
+    "atcoder.jp",
+    "img.atcoder.jp",
+    "cdn.d2-apps.net",
+    "cdn.jsdelivr.net",
+    "static.addtoany.com",
+    "fonts.gstatic.com",
+    "fonts.googleapis.com",
+    "www.google-analytics.com",
+    "www.googletagmanager.com",
     "zhongshi-files.oss-cn-zhangjiakou.aliyuncs.com",
     "yacs-public.oss-cn-hangzhou.aliyuncs.com",
     "acdn-world.luogu.com.cn",

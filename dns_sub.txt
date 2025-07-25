@@ -5,9 +5,12 @@ alicdn.com
 api.lanqiaoqingshao.cn
 api.tsinghuax.com
 at.alicdn.com
+atcoder.jp
 bsxt.kpcb.org.cn
 ccf.org.cn
 cdn.class.luogu.com.cn
+cdn.d2-apps.net
+cdn.jsdelivr.net
 cdn.luogu.com.cn
 ceic.kpcb.org.cn
 class.luogu.com.cn
@@ -23,9 +26,12 @@ dati.kpcb.org.cn
 dewebug.luogu.com.cn
 dl.ccf.org.cn
 ecfinal.luogu.com.cn
+edge.microsoft.com
 errtrack.luogu.com.cn
 fces.ccf.org.cn
 fecdn.luogu.com.cn
+fonts.googleapis.com
+fonts.gstatic.com
 g.alicdn.com
 gesp.ccf.org.cn
 gm.mmstat.com
@@ -33,6 +39,7 @@ help.luogu.com.cn
 hhme.ccf.org.cn
 iai.sh.cn
 icpc.luogu.com.cn
+img.atcoder.jp
 ipic.luogu.com.cn
 jingsai.kpcb.org.cn
 kpcb.org.cn
@@ -51,6 +58,7 @@ passport.ccf.org.cn
 payment.luogu.com.cn
 serviceprod.kpcb.org.cn
 sso.ccf.org.cn
+static.addtoany.com
 stream.class.luogu.com.cn
 stream-push.class.luogu.com.cn
 stream-rts.class.luogu.com.cn
@@ -63,6 +71,8 @@ wp.wwwos.net
 ws.class.luogu.com.cn
 ws.luogu.com.cn
 www.ccf.org.cn
+www.google-analytics.com
+www.googletagmanager.com
 www.iai.sh.cn
 www.kpcb.org.cn
 www.lanqiaoqingshao.cn
