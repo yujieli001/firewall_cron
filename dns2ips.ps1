@@ -44,6 +44,7 @@ $forcedSubs = @(
     "fonts.googleapis.com",
     "www.google-analytics.com",
     "www.googletagmanager.com",
+    "challenges.cloudflare.com",
     "zhongshi-files.oss-cn-zhangjiakou.aliyuncs.com",
     "yacs-public.oss-cn-hangzhou.aliyuncs.com",
     "acdn-world.luogu.com.cn",

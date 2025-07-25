@@ -13,6 +13,7 @@ cdn.d2-apps.net
 cdn.jsdelivr.net
 cdn.luogu.com.cn
 ceic.kpcb.org.cn
+challenges.cloudflare.com
 class.luogu.com.cn
 cncc.ccf.org.cn
 cncc2018.ccf.org.cn
