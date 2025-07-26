@@ -1,9 +1,11 @@
+a.w9.ip-ddns.com
 acdn-world.luogu.com.cn
 adl.ccf.org.cn
 aeis.alicdn.com
 alicdn.com
 api.lanqiaoqingshao.cn
 api.tsinghuax.com
+appv123.oss-cn-hangzhou.aliyuncs.com
 at.alicdn.com
 atcoder.jp
 bsxt.kpcb.org.cn
@@ -29,6 +31,7 @@ dl.ccf.org.cn
 ecfinal.luogu.com.cn
 edge.microsoft.com
 errtrack.luogu.com.cn
+ewewewsdasdsda.oss-cn-hangzhou.aliyuncs.com
 fces.ccf.org.cn
 fecdn.luogu.com.cn
 fonts.googleapis.com
@@ -37,11 +40,13 @@ g.alicdn.com
 gesp.ccf.org.cn
 gm.mmstat.com
 help.luogu.com.cn
+hero-qq-web.oss-cn-hangzhou.aliyuncs.com
 hhme.ccf.org.cn
 iai.sh.cn
 icpc.luogu.com.cn
 img.atcoder.jp
 ipic.luogu.com.cn
+jiangkeke.oss-cn-hangzhou.aliyuncs.com
 jingsai.kpcb.org.cn
 kpcb.org.cn
 lanqiaoqingshao.cn
@@ -55,8 +60,10 @@ online.ccf.org.cn
 oss.lanqiaoqingshao.cn
 oss.stem86.com
 oss-cn-hangzhou.aliyuncs.com
+oz3uib7wwb.oss-cn-hangzhou.aliyuncs.com
 passport.ccf.org.cn
 payment.luogu.com.cn
+private-javascript.oss-cn-hangzhou.aliyuncs.com
 serviceprod.kpcb.org.cn
 sso.ccf.org.cn
 static.addtoany.com
@@ -65,6 +72,7 @@ stream-push.class.luogu.com.cn
 stream-rts.class.luogu.com.cn
 tf.ccf.org.cn
 ti.luogu.com.cn
+tvcbook-video-input.oss-cn-hangzhou.aliyuncs.com
 video.class.luogu.com.cn
 vpn.nbyg.net
 web.ccf.org.cn
@@ -78,7 +86,9 @@ www.iai.sh.cn
 www.kpcb.org.cn
 www.lanqiaoqingshao.cn
 www.luogu.com.cn
+xmqk-oss.oss-cn-hangzhou.aliyuncs.com
 yacs-public.oss-cn-hangzhou.aliyuncs.com
 ygoj.wwwos.net
+yijia666.oss-cn-hangzhou.aliyuncs.com
 ynuf.aliapp.org
 zhongshi-files.oss-cn-zhangjiakou.aliyuncs.com

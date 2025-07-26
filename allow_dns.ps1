@@ -1,24 +1,44 @@
-<#
-.SYNOPSIS
-  限制 Windows 出站网络，仅允许访问白名单 IP 和局域网。
-.DESCRIPTION
-  1. 自动读取 ipv4.txt 和 ipv6.txt 文件作为白名单 IP
-  2. 设置默认出站阻止策略
-  3. 允许白名单 IP 出站
-  4. 允许局域网通信（192.168.0.0/16, 10.0.0.0/8, 172.16.0.0/12）
-.NOTES
-  需要管理员权限运行！
-  需要提前运行 DNS 收集脚本生成 ipv4.txt 和 ipv6.txt
-#>
+# allow_dns.ps1
+# 解析 dns_sub.txt 中的子域名，获取 IP 地址并修改防火墙
+$dnsFile  = "dns_sub.txt"
+$ipv4File = "ipv4.txt"
+$ipv6File = "ipv6.txt"
 
-# ------------ 配置部分 ------------
-# 从文件读取白名单 IP
-$AllowedIPs = @(    
-    "223.5.5.5",    # 阿里 DNS
-    "223.6.6.6",    # 阿里 DNS
-    "8.8.8.8",      # Google DNS
-    "8.8.4.4"       # Google DNS
-)
+Set-Content -Path $ipv4File -Value $null
+Set-Content -Path $ipv6File -Value $null
+
+# 收集 IP 地址
+$subs = Get-Content $dnsFile | Where-Object { $_ -and $_.Trim() -ne "" }
+$i = 0
+foreach ($domain in $subs) {
+    $i++
+    Write-Host "[$i/$($subs.Count)] 解析 $domain"
+    try {
+        [System.Net.Dns]::GetHostAddresses($domain) | ForEach-Object {
+            if ($_.AddressFamily -eq "InterNetwork") {
+                Add-Content -Path $ipv4File -Value $_.ToString()
+            }
+            elseif ($_.AddressFamily -eq "InterNetworkV6") {
+                Add-Content -Path $ipv6File -Value $_.ToString()
+            }
+        }
+    } catch {
+        Write-Host "    [!] 无法解析：$domain"
+    }
+}
+
+# 去重排序
+Get-Content $ipv4File | Sort-Object -Unique | Set-Content $ipv4File
+Get-Content $ipv6File | Sort-Object -Unique | Set-Content $ipv6File
+$AllowedIPs = @(
+    "223.5.5.5", "223.6.6.6", "8.8.8.8", "8.8.4.4"
+) + (Get-Content $ipv4File) + (Get-Content $ipv6File)
+
+# 需要管理员权限
+if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Write-Host "请以管理员身份运行此脚本！" -ForegroundColor Red
+    exit
+}
 
 # 获取脚本所在目录
 $scriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -27,8 +47,9 @@ Write-Host "脚本目录: $scriptPath" -ForegroundColor Cyan
 # 读取 ipv4.txt
 $ipv4File = Join-Path $scriptPath "ipv4.txt"
 if (Test-Path $ipv4File) {
+    $ipv4IPs = @("142.171.157.43")
     # 读取所有非空行，并去除空格
-    $ipv4IPs = Get-Content $ipv4File | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | 
+    $ipv4IPs += Get-Content $ipv4File | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | 
                 ForEach-Object { $_.Trim() } | 
                 Where-Object { $_ -match '^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$' }
     
@@ -48,8 +69,9 @@ else {
 # 读取 ipv6.txt
 $ipv6File = Join-Path $scriptPath "ipv6.txt"
 if (Test-Path $ipv6File) {
+    $ipv6IPs = @("2607:f130:0:159::d77f:d2d1")
     # 读取所有非空行，并去除空格
-    $ipv6IPs = Get-Content $ipv6File | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | 
+    $ipv6IPs += Get-Content $ipv6File | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | 
                 ForEach-Object { $_.Trim() } | 
                 Where-Object { $_ -match ':' }  # 简化IPv6检测
     
@@ -67,14 +89,10 @@ else {
 }
 
 # ------------ 执行部分 ------------
-# 要求管理员权限
-if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    Write-Host "请以管理员身份运行此脚本！" -ForegroundColor Red
-    exit
-}
-
-# 0. 确保防火墙服务正在运行
+# 0. 确保防火墙服务正在运行,清除旧规则
 Get-Service -Name MpsSvc | Start-Service -ErrorAction SilentlyContinue
+Get-NetFirewallRule -DisplayName "Allow Local Network" | Remove-NetFirewallRule
+Get-NetFirewallRule -DisplayName "Allow Outbound to Whitelist Part *" | Remove-NetFirewallRule
 
 # 1. 允许局域网通信（避免内网中断）
 Write-Host "允许局域网通信..." -ForegroundColor Cyan
@@ -110,14 +128,3 @@ Set-NetFirewallProfile -All -DefaultOutboundAction Block
 Write-Host "配置完成！仅允许访问白名单 IP 和局域网。" -ForegroundColor Green
 Write-Host "白名单 IP 数量: $($AllowedIPs.Count)" -ForegroundColor Yellow
 Write-Host "测试命令: ping 192.168.1.254, ping 8.8.8.8（应能连通）, ping 1.1.1.1（应被阻止）" -ForegroundColor Yellow
-
-# ------------ 恢复选项（注释部分，需手动取消注释运行） ------------
-<#
-# 恢复默认设置（取消注释后运行）
-Set-NetFirewallProfile -All -DefaultOutboundAction Allow
-Get-NetFirewallRule -Direction Outbound | Where-Object { 
-    $_.DisplayName -like "Allow Outbound to Whitelist*" -or 
-    $_.DisplayName -eq "Allow Local Network" 
-} | Remove-NetFirewallRule
-Write-Host "已恢复默认出站允许策略并删除自定义规则。" -ForegroundColor Green
-#>
