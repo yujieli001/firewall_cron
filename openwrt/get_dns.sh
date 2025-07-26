@@ -9,7 +9,9 @@ DOMAINS="
     atcoder.jp
     oss-cn-hangzhou.aliyuncs.com
     lanqiaoqingshao.cn
-    alicdn.com"
+    alicdn.com
+    gvt2.com
+    gcp.gvt2.com"
 
 # 创建输出目录并清空上次结果
 mkdir -p /etc/luci-uploads
@@ -72,6 +74,14 @@ oss.lanqiaoqingshao.cn
 ynuf.aliapp.org
 gm.mmstat.com
 oss.stem86.com
+a.w9.ip-ddns.com
+crt.sh
+open.bigmodel.cn
+analytics.immersivetranslate.com
+beacons.gcp.gvt2.com
+beacons.gvt2.com
+b1.nel.goog
+e2c35.gcp.gvt2.com
 EOF2
 
 echo "[*] 开始从 crt.sh 获取多个域名的子域名并解析 IP ..."

@@ -23,7 +23,8 @@ $forcedSubs = @(
     "web.ccf.org.cn", "wp.wwwos.net", "ws.class.luogu.com.cn", "ws.luogu.com.cn", "api.tsinghuax.com",
     "www.ccf.org.cn", "www.kpcb.org.cn", "www.luogu.com.cn", "ygoj.wwwos.net", "comp.webtrncdn.com",
     "www.lanqiaoqingshao.cn", "api.lanqiaoqingshao.cn", "oss.lanqiaoqingshao.cn", "ynuf.aliapp.org",
-    "gm.mmstat.com", "oss.stem86.com", "a.w9.ip-ddns.com", "crt.sh"
+    "gm.mmstat.com", "oss.stem86.com", "a.w9.ip-ddns.com", "crt.sh", "open.bigmodel.cn",
+    "analytics.immersivetranslate.com", "beacons.gcp.gvt2.com", "beacons.gvt2.com", "b1.nel.goog","e2c35.gcp.gvt2.com"
 )
 
 Set-Content -Path $dnsFile -Value $null
