@@ -1,6 +1,6 @@
 @echo off
 :: 静默运行 get_dns.ps1
-powershell -WindowStyle Hidden  -NoProfile -ExecutionPolicy Bypass -File "%~dp0get_dns.ps1" >nul 2>&1
+powershell -WindowStyle Hidden  -NoProfile -ExecutionPolicy Bypass -File "d:\firewall_cron\get_dns.ps1" >nul 2>&1
 
 :: 判断是否以管理员身份运行
 net session >nul 2>&1
@@ -12,6 +12,6 @@ if %errorlevel% neq 0 (
 )
 
 :: 以管理员权限静默运行 allow_dns.ps1
-powershell -WindowStyle Hidden  -NoProfile -ExecutionPolicy Bypass -File "%~dp0allow_dns.ps1" >nul 2>&1
+powershell -WindowStyle Hidden  -NoProfile -ExecutionPolicy Bypass -File "d:\firewall_cron\allow_dns.ps1" >nul 2>&1
 
 

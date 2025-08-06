@@ -11,7 +11,8 @@ DOMAINS="
     lanqiaoqingshao.cn
     alicdn.com
     gvt2.com
-    gcp.gvt2.com"
+    gcp.gvt2.com
+    acmcoder.com"
 
 # 创建输出目录并清空上次结果
 mkdir -p /etc/luci-uploads
@@ -82,6 +83,22 @@ beacons.gcp.gvt2.com
 beacons.gvt2.com
 b1.nel.goog
 e2c35.gcp.gvt2.com
+examacmcoder.oss-cn-beijing.aliyuncs.com
+examacmcoder.oss-accelerate.aliyuncs.com
+acmcoder.com
+lanqiao.acmcoder.com
+ws.acmcoder.com
+tcdn.acmcoder.com
+62885.acmcoder.com
+all.acmcoder.com.w.kunlunsl.com
+alb-cz0efer2d8r287ath9.cn-beijing.alb.aliyuncs.com
+exam.acmcoder.com
+exercise.acmcoder.com
+pel9t1l49r4hy553.aliyunddos1013.com
+labfiles.acmcoder.com.w.cdngslb.com
+088bxw1q70s5dsjk.aliyunddos1013.com
+51b9047024eu1o81.aliyunddos1013.com
+7q2c176p6t5vh87n.aliyunddos1013.com
 EOF2
 
 echo "[*] 开始从 crt.sh 获取多个域名的子域名并解析 IP ..."

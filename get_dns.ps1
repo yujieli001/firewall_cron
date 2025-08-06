@@ -2,7 +2,7 @@
 $dnsFile = "dns_sub.txt"
 $domains = @(
     "luogu.com.cn", "iai.sh.cn", "atcoder.jp", "kpcb.org.cn", "ccf.org.cn",
-    "oss-cn-hangzhou.aliyuncs.com", "lanqiaoqingshao.cn", "alicdn.com"
+    "oss-cn-hangzhou.aliyuncs.com", "lanqiaoqingshao.cn", "alicdn.com", "acmcoder.com"
 )
 $forcedSubs = @(
     "edge.microsoft.com", "codeds.xueersi.com", "vpn.nbyg.net", "www.iai.sh.cn", "atcoder.jp",
@@ -24,7 +24,13 @@ $forcedSubs = @(
     "www.ccf.org.cn", "www.kpcb.org.cn", "www.luogu.com.cn", "ygoj.wwwos.net", "comp.webtrncdn.com",
     "www.lanqiaoqingshao.cn", "api.lanqiaoqingshao.cn", "oss.lanqiaoqingshao.cn", "ynuf.aliapp.org",
     "gm.mmstat.com", "oss.stem86.com", "a.w9.ip-ddns.com", "crt.sh", "open.bigmodel.cn",
-    "analytics.immersivetranslate.com", "beacons.gcp.gvt2.com", "beacons.gvt2.com", "b1.nel.goog","e2c35.gcp.gvt2.com"
+    "analytics.immersivetranslate.com", "beacons.gcp.gvt2.com", "beacons.gvt2.com", "b1.nel.goog","e2c35.gcp.gvt2.com",
+    "examacmcoder.oss-cn-beijing.aliyuncs.com","examacmcoder.oss-accelerate.aliyuncs.com","acmcoder.com",
+    "lanqiao.acmcoder.com","ws.acmcoder.com","tcdn.acmcoder.com","62885.acmcoder.com","all.acmcoder.com.w.kunlunsl.com",
+    "alb-cz0efer2d8r287ath9.cn-beijing.alb.aliyuncs.com","exam.acmcoder.com","exercise.acmcoder.com",
+    "pel9t1l49r4hy553.aliyunddos1013.com","labfiles.acmcoder.com.w.cdngslb.com","088bxw1q70s5dsjk.aliyunddos1013.com",
+    "51b9047024eu1o81.aliyunddos1013.com","7q2c176p6t5vh87n.aliyunddos1013.com",
+    "examassets.acmcoder.com","cdnw2.acmcoder.com"
 )
 
 Set-Content -Path $dnsFile -Value $null
