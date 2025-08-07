@@ -1,8 +1,8 @@
 # get_dns.ps1 - 仅收集非 * 开头的子域名，写入 dns_sub.txt
 $dnsFile = "dns_sub.txt"
 $domains = @(
-    "luogu.com.cn", "iai.sh.cn", "atcoder.jp", "kpcb.org.cn", "ccf.org.cn",
-    "oss-cn-hangzhou.aliyuncs.com", "lanqiaoqingshao.cn", "alicdn.com", "acmcoder.com"
+    "luogu.com.cn", "iai.sh.cn", "atcoder.jp", "acmcoder.com", "kpcb.org.cn", "ccf.org.cn",
+    "oss-cn-hangzhou.aliyuncs.com", "lanqiaoqingshao.cn", "alicdn.com"
 )
 $forcedSubs = @(
     "edge.microsoft.com", "codeds.xueersi.com", "vpn.nbyg.net", "www.iai.sh.cn", "atcoder.jp",

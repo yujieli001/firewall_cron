@@ -7,12 +7,12 @@ DOMAINS="
     ccf.org.cn
     ai.sh.cn
     atcoder.jp
+    acmcoder.com
     oss-cn-hangzhou.aliyuncs.com
     lanqiaoqingshao.cn
     alicdn.com
     gvt2.com
-    gcp.gvt2.com
-    acmcoder.com"
+    gcp.gvt2.com"
 
 # 创建输出目录并清空上次结果
 mkdir -p /etc/luci-uploads
@@ -99,6 +99,8 @@ labfiles.acmcoder.com.w.cdngslb.com
 088bxw1q70s5dsjk.aliyunddos1013.com
 51b9047024eu1o81.aliyunddos1013.com
 7q2c176p6t5vh87n.aliyunddos1013.com
+examassets.acmcoder.com
+cdnw2.acmcoder.com
 EOF2
 
 echo "[*] 开始从 crt.sh 获取多个域名的子域名并解析 IP ..."
