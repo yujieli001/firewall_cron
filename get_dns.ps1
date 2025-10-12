@@ -1,8 +1,8 @@
 # get_dns.ps1 - 仅收集非 * 开头的子域名，写入 dns_sub.txt
 $dnsFile = "dns_sub.txt"
 $domains = @(
-    "luogu.com.cn", "iai.sh.cn", "atcoder.jp", "acmcoder.com", "kpcb.org.cn", "ccf.org.cn",
-    "oss-cn-hangzhou.aliyuncs.com", "lanqiaoqingshao.cn", "alicdn.com"
+    "luogu.com.cn", "iai.sh.cn", "atcoder.jp", "kpcb.org.cn", "ccf.org.cn",
+    "oss-cn-hangzhou.aliyuncs.com", "lanqiaoqingshao.cn", "alicdn.com", "acmcoder.com"
 )
 $forcedSubs = @(
     "edge.microsoft.com", "codeds.xueersi.com", "vpn.nbyg.net", "www.iai.sh.cn", "atcoder.jp",
@@ -17,7 +17,10 @@ $forcedSubs = @(
     "fecdn.luogu.com.cn", "g.alicdn.com", "o.alicdn.com", "at.alicdn.com", "aeis.alicdn.com",
     "gesp.ccf.org.cn", "help.luogu.com.cn", "hhme.ccf.org.cn", "icpc.luogu.com.cn", "ipic.luogu.com.cn",
     "jingsai.kpcb.org.cn", "kpcb.org.cn", "luogu.com.cn", "mobile.ccf.org.cn", "oa.ccf.org.cn",
-    "oj.wlhcode.com", "oj.wwwos.net", "online.ccf.org.cn", "passport.ccf.org.cn", "payment.luogu.com.cn",
+    "oj.wlhcode.com", "oj.wwwos.net", "online.ccf.org.cn", "bigcodeforce.cn",
+    "meeting.tencent.com","publiclog.zhiyan.tencent-cloud.net","work.medialab.qq.com","meeting.qq.com",
+    "conn.wemeet.tencent.com","report.meeting.tencent.com","quic.conn.wemeet.qq.com",
+    "passport.ccf.org.cn", "payment.luogu.com.cn","vjudge.net","noi.cn","cspsjtest.noi.cn",
     "serviceprod.kpcb.org.cn", "sso.ccf.org.cn", "stream.class.luogu.com.cn", "stream-push.class.luogu.com.cn",
     "stream-rts.class.luogu.com.cn", "tf.ccf.org.cn", "ti.luogu.com.cn", "video.class.luogu.com.cn",
     "web.ccf.org.cn", "wp.wwwos.net", "ws.class.luogu.com.cn", "ws.luogu.com.cn", "api.tsinghuax.com",
