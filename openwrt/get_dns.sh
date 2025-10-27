@@ -101,6 +101,11 @@ labfiles.acmcoder.com.w.cdngslb.com
 7q2c176p6t5vh87n.aliyunddos1013.com
 examassets.acmcoder.com
 cdnw2.acmcoder.com
+c-v6.dun.163.com
+cstaticdun-v6.126.net
+ir-sdk-v6.dun.163.com
+c-v6.dun.163yun.com
+necaptcha-v6.nosdn.127.net
 EOF2
 
 echo "[*] 开始从 crt.sh 获取多个域名的子域名并解析 IP ..."

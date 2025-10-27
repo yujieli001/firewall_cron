@@ -33,7 +33,8 @@ $forcedSubs = @(
     "alb-cz0efer2d8r287ath9.cn-beijing.alb.aliyuncs.com","exam.acmcoder.com","exercise.acmcoder.com",
     "pel9t1l49r4hy553.aliyunddos1013.com","labfiles.acmcoder.com.w.cdngslb.com","088bxw1q70s5dsjk.aliyunddos1013.com",
     "51b9047024eu1o81.aliyunddos1013.com","7q2c176p6t5vh87n.aliyunddos1013.com",
-    "examassets.acmcoder.com","cdnw2.acmcoder.com"
+    "examassets.acmcoder.com","cdnw2.acmcoder.com","c-v6.dun.163.com","cstaticdun-v6.126.net",
+    "ir-sdk-v6.dun.163.com","c-v6.dun.163yun.com","necaptcha-v6.nosdn.127.net"
 )
 
 Set-Content -Path $dnsFile -Value $null
