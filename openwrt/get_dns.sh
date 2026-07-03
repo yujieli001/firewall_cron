@@ -6,6 +6,8 @@ TMP_FILE="/tmp/dns_sub.tmp"
 # 固定域名列表
 DOMAINS="
 luogu.com.cn
+acwing.com
+vjudge.net
 kpcb.org.cn
 ccf.org.cn
 iai.sh.cn
@@ -16,7 +18,6 @@ lanqiaoqingshao.cn
 alicdn.com
 gvt2.com
 gcp.gvt2.com
-vjudge.net
 "
 
 # 创建目录
@@ -27,6 +28,9 @@ echo "[*] 写入固定域名..."
 
 cat <<EOF >> "$OUT"
 edge.microsoft.com
+www.acwing.com
+cdn.acwing.com
+video.acwing.com
 oj.wwwos.net
 oj.wlhcode.com
 cdn.wlhcode.com
@@ -45,6 +49,7 @@ at.alicdn.com
 img.atcoder.jp
 cdn.jsdelivr.net
 fonts.gstatic.com
+videocloud.cn-hangzhou.log.aliyuncs.com
 fonts.googleapis.com
 www.google-analytics.com
 www.googletagmanager.com

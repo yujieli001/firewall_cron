@@ -3,7 +3,8 @@ $dnsFile = "dns_sub.txt"
 $domains = @(
     "luogu.com.cn", "iai.sh.cn", "atcoder.jp", "kpcb.org.cn", "ccf.org.cn",
     "oss-cn-hangzhou.aliyuncs.com", "lanqiaoqingshao.cn", "alicdn.com", "acmcoder.com",
-    "bilibili.com", "bilivideo.com", "biligame.com","api.bilibili.com","live.bilibili.com","hdslb.com","biliimg.com"
+    #"bilibili.com", "bilivideo.com", "biligame.com","api.bilibili.com","live.bilibili.com","hdslb.com","biliimg.com"
+    "acwing.com"
 )
 $forcedSubs = @(
     "edge.microsoft.com", "codeds.xueersi.com", "vpn.nbyg.net", "www.iai.sh.cn", "atcoder.jp",
@@ -36,10 +37,11 @@ $forcedSubs = @(
     "51b9047024eu1o81.aliyunddos1013.com","7q2c176p6t5vh87n.aliyunddos1013.com",
     "examassets.acmcoder.com","cdnw2.acmcoder.com","c-v6.dun.163.com","cstaticdun-v6.126.net",
     "ir-sdk-v6.dun.163.com","c-v6.dun.163yun.com","necaptcha-v6.nosdn.127.net",
-    "api.bilibili.com", "api.live.bilibili.com", "cm.bilibili.com", "data.bilibili.com", "manga.bilibili.com", "i0.hdslb.com", "i1.hdslb.com",
-    "i2.hdslb.com","s1.hdslb.com","archive.biliimg.com","upos-sz-mirror08c.bilivideo.com","upos-sz-mirrorcos.bilivideo.com",
-    "game-data-api.biligame.com","api.live.bilibili.com","s1.hdslb.com","upos-sz-estgcos.bilivideo.com",
-    "upos-sz-estghw.bilivideo.com","upos-sz-mirror08c.bilivideo.com","upos-sz-mirrorcos.bilivideo.com","www.bilibili.com"
+    #"api.bilibili.com", "api.live.bilibili.com", "cm.bilibili.com", "data.bilibili.com", "manga.bilibili.com", "i0.hdslb.com", "i1.hdslb.com",
+    #"i2.hdslb.com","s1.hdslb.com","archive.biliimg.com","upos-sz-mirror08c.bilivideo.com","upos-sz-mirrorcos.bilivideo.com",
+    #"game-data-api.biligame.com","api.live.bilibili.com","s1.hdslb.com","upos-sz-estgcos.bilivideo.com",
+    #"upos-sz-estghw.bilivideo.com","upos-sz-mirror08c.bilivideo.com","upos-sz-mirrorcos.bilivideo.com","www.bilibili.com"
+    "cdn.acwing.com","www.acwing.com","video.acwing.com","videocloud.cn-hangzhou.log.aliyuncs.com"
 )
 
 Set-Content -Path $dnsFile -Value $null
