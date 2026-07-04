@@ -50,6 +50,7 @@ img.atcoder.jp
 cdn.jsdelivr.net
 fonts.gstatic.com
 videocloud.cn-hangzhou.log.aliyuncs.com
+vod.cn-shanghai.aliyun.com
 fonts.googleapis.com
 www.google-analytics.com
 www.googletagmanager.com

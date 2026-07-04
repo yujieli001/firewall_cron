@@ -3,7 +3,7 @@ $dnsFile = "dns_sub.txt"
 $domains = @(
     "luogu.com.cn", "iai.sh.cn", "atcoder.jp", "kpcb.org.cn", "ccf.org.cn",
     "oss-cn-hangzhou.aliyuncs.com", "lanqiaoqingshao.cn", "alicdn.com", "acmcoder.com",
-    #"bilibili.com", "bilivideo.com", "biligame.com","api.bilibili.com","live.bilibili.com","hdslb.com","biliimg.com"
+    #"bilibili.com", "bilivideo.com", "biligame.com","api.bilibili.com","live.bilibili.com","hdslb.com","biliimg.com",
     "acwing.com"
 )
 $forcedSubs = @(
@@ -40,8 +40,8 @@ $forcedSubs = @(
     #"api.bilibili.com", "api.live.bilibili.com", "cm.bilibili.com", "data.bilibili.com", "manga.bilibili.com", "i0.hdslb.com", "i1.hdslb.com",
     #"i2.hdslb.com","s1.hdslb.com","archive.biliimg.com","upos-sz-mirror08c.bilivideo.com","upos-sz-mirrorcos.bilivideo.com",
     #"game-data-api.biligame.com","api.live.bilibili.com","s1.hdslb.com","upos-sz-estgcos.bilivideo.com",
-    #"upos-sz-estghw.bilivideo.com","upos-sz-mirror08c.bilivideo.com","upos-sz-mirrorcos.bilivideo.com","www.bilibili.com"
-    "cdn.acwing.com","www.acwing.com","video.acwing.com","videocloud.cn-hangzhou.log.aliyuncs.com"
+    #"upos-sz-estghw.bilivideo.com","upos-sz-mirror08c.bilivideo.com","upos-sz-mirrorcos.bilivideo.com","www.bilibili.com",
+    "cdn.acwing.com","www.acwing.com","video.acwing.com","videocloud.cn-hangzhou.log.aliyuncs.com","vod.cn-shanghai.aliyun.com"
 )
 
 Set-Content -Path $dnsFile -Value $null
