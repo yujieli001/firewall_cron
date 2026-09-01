@@ -1,5 +1,14 @@
 ﻿# get_dns.ps1 - CT + Passive DNS + DNS Brute-force Subdomain Enumerator
 
+# 检查管理员权限，非管理员则提权重新运行
+
+if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Write-Host "[!] Not running as administrator, relaunching with elevated privileges..."
+    $elevArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', (Join-Path $PSScriptRoot 'get_dns.ps1'))
+    Start-Process powershell -Verb RunAs -ArgumentList ($elevArgs -join ' ')
+    exit
+}
+
 $ErrorActionPreference = "Continue"
 
 # Add Go bin to PATH so subfinder/dnsx can be found
@@ -14,16 +23,16 @@ $dnsFile = Join-Path $PSScriptRoot "dns_sub.txt"
 # ====================================================================
 
 $domains = @(
-"luogu.com.cn",
-"acwing.com",
-"iai.sh.cn",
-"atcoder.jp",
+#"luogu.com.cn",
+#"acwing.com"
+#"iai.sh.cn",
+#"atcoder.jp",
 #"kpcb.org.cn",
-"ccf.org.cn",
+#"ccf.org.cn",
 #"lanqiaoqingshao.cn",
-"alicdn.com",
-"acmcoder.com",
-"cn-hangzhou.log.aliyuncs.com"
+#"alicdn.com",
+#"acmcoder.com",
+#"cn-hangzhou.log.aliyuncs.com"
 )
 
 # ====================================================================
