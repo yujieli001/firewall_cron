@@ -84,6 +84,9 @@ necaptcha-v6.nosdn.127.net
 noi.cn
 o.alicdn.com
 oa.ccf.org.cn
+oi-wiki.org
+oi-wiki.org.w.cdngslb.com
+oi-wiki.org.w.kunlunsl.com
 oj.wlhcode.com
 oj.wwwos.net
 online.ccf.org.cn
