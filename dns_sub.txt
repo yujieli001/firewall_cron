@@ -33,6 +33,7 @@ challenges.cloudflare.com
 class.luogu.com.cn
 cncc.ccf.org.cn
 cncc2018.ccf.org.cn
+cn-hangzhou.log.aliyuncs.com
 codeds.xueersi.com
 comp.webtrncdn.com
 conf.ccf.org.cn
@@ -63,6 +64,7 @@ fonts.googleapis.com
 fonts.gstatic.com
 g.alicdn.com
 gesp.ccf.org.cn
+git.acwing.com
 gm.mmstat.com
 help.luogu.com.cn
 hhme.ccf.org.cn
@@ -97,6 +99,7 @@ oss-cn-hangzhou.aliyuncs.com
 passport.ccf.org.cn
 payment.luogu.com.cn
 pel9t1l49r4hy553.aliyunddos1013.com
+play.acwing.com
 publiclog.zhiyan.tencent-cloud.net
 quic.conn.wemeet.qq.com
 report.meeting.tencent.com

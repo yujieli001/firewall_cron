@@ -31,6 +31,8 @@ edge.microsoft.com
 www.acwing.com
 cdn.acwing.com
 video.acwing.com
+git.acwing.com
+play.acwing.com
 oj.wwwos.net
 oj.wlhcode.com
 cdn.wlhcode.com
@@ -50,6 +52,7 @@ img.atcoder.jp
 cdn.jsdelivr.net
 fonts.gstatic.com
 videocloud.cn-hangzhou.log.aliyuncs.com
+oss-cn-hangzhou.aliyuncs.com
 vod.cn-shanghai.aliyun.com
 fonts.googleapis.com
 www.google-analytics.com
