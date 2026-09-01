@@ -1,22 +1,22 @@
-ï»¿# allow_dns.ps1
-# è§£æ dns_sub.txt ä¸­çš„å­åŸŸåï¼Œè·å– IP åœ°å€å¹¶ä¿®æ”¹é˜²ç«å¢™
+# allow_dns.ps1
+# ½âÎö dns_sub.txt ÖĞµÄ×ÓÓòÃû£¬»ñÈ¡ IP µØÖ·²¢ĞŞ¸Ä·À»ğÇ½
 
-# ä½¿ç”¨ $PSScriptRoot ç¡®ä¿è·¯å¾„ä¸è„šæœ¬æ‰€åœ¨ç›®å½•ä¸€è‡´ï¼Œä¸ç›˜ç¬¦å’Œè¿è¡Œç›®å½•æ— å…³
+# Ê¹ÓÃ $PSScriptRoot È·±£Â·¾¶Óë½Å±¾ËùÔÚÄ¿Â¼Ò»ÖÂ£¬ÓëÅÌ·ûºÍÔËĞĞÄ¿Â¼ÎŞ¹Ø
 $scriptDir = $PSScriptRoot
 $dnsFile  = Join-Path $scriptDir "dns_sub.txt"
 $ipv4File = Join-Path $scriptDir "ipv4.txt"
 $ipv6File = Join-Path $scriptDir "ipv6.txt"
 
-# æ¸…ç©ºæ—§çš„ IP æ–‡ä»¶
+# Çå¿Õ¾ÉµÄ IP ÎÄ¼ş
 Set-Content -Path $ipv4File -Value $null
 Set-Content -Path $ipv6File -Value $null
 
-# æ”¶é›† IP åœ°å€
+# ÊÕ¼¯ IP µØÖ·
 $subs = Get-Content $dnsFile | Where-Object { $_ -and $_.Trim() -ne "" }
 $i = 0
 foreach ($domain in $subs) {
     $i++
-    Write-Host "[$i/$($subs.Count)] è§£æ $domain"
+    Write-Host "[$i/$($subs.Count)] ½âÎö $domain"
     try {
         [System.Net.Dns]::GetHostAddresses($domain) | ForEach-Object {
             if ($_.AddressFamily -eq "InterNetwork") {
@@ -27,83 +27,83 @@ foreach ($domain in $subs) {
             }
         }
     } catch {
-        Write-Host "    [!] æ— æ³•è§£æï¼š$domain"
+        Write-Host "    [!] ÎŞ·¨½âÎö£º$domain"
     }
 }
 
-# å»é‡æ’åº
+# È¥ÖØÅÅĞò
 Get-Content $ipv4File | Sort-Object -Unique | Set-Content $ipv4File
 Get-Content $ipv6File | Sort-Object -Unique | Set-Content $ipv6File
 
-# éœ€è¦ç®¡ç†å‘˜æƒé™
+# ĞèÒª¹ÜÀíÔ±È¨ÏŞ
 if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    Write-Host "è¯·ä»¥ç®¡ç†å‘˜èº«ä»½è¿è¡Œæ­¤è„šæœ¬ï¼" -ForegroundColor Red
+    Write-Host "ÇëÒÔ¹ÜÀíÔ±Éí·İÔËĞĞ´Ë½Å±¾£¡" -ForegroundColor Red
     exit
 }
 
-# æ„å»ºç™½åå• IP åˆ—è¡¨
+# ¹¹½¨°×Ãûµ¥ IP ÁĞ±í
 $AllowedIPs = @(
     "223.5.5.5", "223.6.6.6", "8.8.8.8", "8.8.4.4"
 ) + (Get-Content $ipv4File) + (Get-Content $ipv6File)
 
-# è¯»å– ipv4.txt å¹¶è¿½åŠ 
+# ¶ÁÈ¡ ipv4.txt ²¢×·¼Ó
 if (Test-Path $ipv4File) {
     $ipv4IPs = @("142.171.157.43")
-    # è¯»å–æ‰€æœ‰éç©ºè¡Œï¼Œå¹¶å»é™¤ç©ºæ ¼
+    # ¶ÁÈ¡ËùÓĞ·Ç¿ÕĞĞ£¬²¢È¥³ı¿Õ¸ñ
     $ipv4IPs += Get-Content $ipv4File | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
                 ForEach-Object { $_.Trim() } |
                 Where-Object { $_ -match '^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$' }
 
     $ipv4Count = ($ipv4IPs | Measure-Object).Count
-    Write-Host "ä» $ipv4File è¯»å–åˆ° $ipv4Count ä¸ª IPv4 åœ°å€" -ForegroundColor Cyan
+    Write-Host "´Ó $ipv4File ¶ÁÈ¡µ½ $ipv4Count ¸ö IPv4 µØÖ·" -ForegroundColor Cyan
 
     if ($ipv4Count -gt 0) {
         $AllowedIPs += $ipv4IPs
     } else {
-        Write-Host "è­¦å‘Š: $ipv4File ä¸­æ²¡æœ‰æœ‰æ•ˆçš„ IPv4 åœ°å€" -ForegroundColor Yellow
+        Write-Host "¾¯¸æ: $ipv4File ÖĞÃ»ÓĞÓĞĞ§µÄ IPv4 µØÖ·" -ForegroundColor Yellow
     }
 } else {
-    Write-Host "è­¦å‘Š: $ipv4File æ–‡ä»¶ä¸å­˜åœ¨ï¼Œå°†è·³è¿‡ IPv4 ç™½åå•" -ForegroundColor Yellow
+    Write-Host "¾¯¸æ: $ipv4File ÎÄ¼ş²»´æÔÚ£¬½«Ìø¹ı IPv4 °×Ãûµ¥" -ForegroundColor Yellow
 }
 
-# è¯»å– ipv6.txt å¹¶è¿½åŠ 
+# ¶ÁÈ¡ ipv6.txt ²¢×·¼Ó
 if (Test-Path $ipv6File) {
     $ipv6IPs = @("2607:f130:0:159::d77f:d2d1")
-    # è¯»å–æ‰€æœ‰éç©ºè¡Œï¼Œå¹¶å»é™¤ç©ºæ ¼
+    # ¶ÁÈ¡ËùÓĞ·Ç¿ÕĞĞ£¬²¢È¥³ı¿Õ¸ñ
     $ipv6IPs += Get-Content $ipv6File | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
                 ForEach-Object { $_.Trim() } |
-                Where-Object { $_ -match ':' }  # ç®€åŒ–IPv6æ£€æµ‹
+                Where-Object { $_ -match ':' }  # ¼ò»¯IPv6¼ì²â
 
     $ipv6Count = ($ipv6IPs | Measure-Object).Count
-    Write-Host "ä» $ipv6File è¯»å–åˆ° $ipv6Count ä¸ª IPv6 åœ°å€" -ForegroundColor Cyan
+    Write-Host "´Ó $ipv6File ¶ÁÈ¡µ½ $ipv6Count ¸ö IPv6 µØÖ·" -ForegroundColor Cyan
 
     if ($ipv6Count -gt 0) {
         $AllowedIPs += $ipv6IPs
     } else {
-        Write-Host "è­¦å‘Š: $ipv6File ä¸­æ²¡æœ‰æœ‰æ•ˆçš„ IPv6 åœ°å€" -ForegroundColor Yellow
+        Write-Host "¾¯¸æ: $ipv6File ÖĞÃ»ÓĞÓĞĞ§µÄ IPv6 µØÖ·" -ForegroundColor Yellow
     }
 } else {
-    Write-Host "è­¦å‘Š: $ipv6File æ–‡ä»¶ä¸å­˜åœ¨ï¼Œå°†è·³è¿‡ IPv6 ç™½åå•" -ForegroundColor Yellow
+    Write-Host "¾¯¸æ: $ipv6File ÎÄ¼ş²»´æÔÚ£¬½«Ìø¹ı IPv6 °×Ãûµ¥" -ForegroundColor Yellow
 }
 
-# ------------ æ‰§è¡Œéƒ¨åˆ† ------------
-# 0. ç¡®ä¿é˜²ç«å¢™æœåŠ¡æ­£åœ¨è¿è¡Œï¼Œæ¸…é™¤æ—§è§„åˆ™
+# ------------ Ö´ĞĞ²¿·Ö ------------
+# 0. È·±£·À»ğÇ½·şÎñÕıÔÚÔËĞĞ£¬Çå³ı¾É¹æÔò
 Get-Service -Name MpsSvc | Start-Service -ErrorAction SilentlyContinue
 Get-NetFirewallRule -DisplayName "Allow Local Network" | Remove-NetFirewallRule
 Get-NetFirewallRule -DisplayName "Allow Outbound to Whitelist Part *" | Remove-NetFirewallRule
 
-# 1. å…è®¸å±€åŸŸç½‘é€šä¿¡ï¼ˆé¿å…å†…ç½‘ä¸­æ–­ï¼‰
-Write-Host "å…è®¸å±€åŸŸç½‘é€šä¿¡..." -ForegroundColor Cyan
+# 1. ÔÊĞí¾ÖÓòÍøÍ¨ĞÅ£¨±ÜÃâÄÚÍøÖĞ¶Ï£©
+Write-Host "ÔÊĞí¾ÖÓòÍøÍ¨ĞÅ..." -ForegroundColor Cyan
 New-NetFirewallRule -DisplayName "Allow Local Network" -Direction Outbound -Action Allow `
     -RemoteAddress @("192.168.0.0/16", "10.0.0.0/8", "172.16.0.0/12") `
     -Profile Any -ErrorAction SilentlyContinue
 
-# 2. å…è®¸ç™½åå• IP å‡ºç«™ï¼ˆåˆ†å—å¤„ç†é¿å…è¶…é™ï¼‰
-$chunkSize = 500  # æ¯ä¸ªè§„åˆ™æœ€å¤š500ä¸ªIP
+# 2. ÔÊĞí°×Ãûµ¥ IP ³öÕ¾£¨·Ö¿é´¦Àí±ÜÃâ³¬ÏŞ£©
+$chunkSize = 500  # Ã¿¸ö¹æÔò×î¶à500¸öIP
 $ipCount = $AllowedIPs.Count
 $chunks = [math]::Ceiling($ipCount / $chunkSize)
 
-Write-Host "æ·»åŠ ç™½åå•è§„åˆ™ ($ipCount ä¸ªIP, åˆ† $chunks ä¸ªè§„åˆ™)..." -ForegroundColor Cyan
+Write-Host "Ìí¼Ó°×Ãûµ¥¹æÔò ($ipCount ¸öIP, ·Ö $chunks ¸ö¹æÔò)..." -ForegroundColor Cyan
 
 for ($i = 0; $i -lt $chunks; $i++) {
     $start = $i * $chunkSize
@@ -112,17 +112,17 @@ for ($i = 0; $i -lt $chunks; $i++) {
 
     if ($chunkIPs) {
         $ruleName = "Allow Outbound to Whitelist Part " + ($i + 1)
-        Write-Host "åˆ›å»ºè§„åˆ™ $ruleName (åŒ…å« $($chunkIPs.Count) ä¸ª IP)"
+        Write-Host "´´½¨¹æÔò $ruleName (°üº¬ $($chunkIPs.Count) ¸ö IP)"
         New-NetFirewallRule -DisplayName $ruleName -Direction Outbound -Action Allow `
             -RemoteAddress $chunkIPs -Profile Any -ErrorAction SilentlyContinue
     }
 }
 
-# 3. è®¾ç½®é»˜è®¤å‡ºç«™é˜»æ­¢ç­–ç•¥
-Write-Host "é…ç½®é»˜è®¤å‡ºç«™é˜»æ­¢ç­–ç•¥..." -ForegroundColor Cyan
+# 3. ÉèÖÃÄ¬ÈÏ³öÕ¾×èÖ¹²ßÂÔ
+Write-Host "ÅäÖÃÄ¬ÈÏ³öÕ¾×èÖ¹²ßÂÔ..." -ForegroundColor Cyan
 Set-NetFirewallProfile -All -DefaultOutboundAction Block
 
-# å®Œæˆ
-Write-Host "é…ç½®å®Œæˆï¼ä»…å…è®¸è®¿é—®ç™½åå• IP å’Œå±€åŸŸç½‘ã€‚" -ForegroundColor Green
-Write-Host "ç™½åå• IP æ•°é‡: $($AllowedIPs.Count)" -ForegroundColor Yellow
-Write-Host "æµ‹è¯•å‘½ä»¤: ping 192.168.1.254, ping 8.8.8.8ï¼ˆåº”èƒ½è¿é€šï¼‰, ping 1.1.1.1ï¼ˆåº”è¢«é˜»æ­¢ï¼‰" -ForegroundColor Yellow
+# Íê³É
+Write-Host "ÅäÖÃÍê³É£¡½öÔÊĞí·ÃÎÊ°×Ãûµ¥ IP ºÍ¾ÖÓòÍø¡£" -ForegroundColor Green
+Write-Host "°×Ãûµ¥ IP ÊıÁ¿: $($AllowedIPs.Count)" -ForegroundColor Yellow
+Write-Host "²âÊÔÃüÁî: ping 192.168.1.254, ping 8.8.8.8£¨Ó¦ÄÜÁ¬Í¨£©, ping 1.1.1.1£¨Ó¦±»×èÖ¹£©" -ForegroundColor Yellow
