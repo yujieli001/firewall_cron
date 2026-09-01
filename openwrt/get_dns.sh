@@ -53,7 +53,7 @@ cdn.jsdelivr.net
 fonts.gstatic.com
 videocloud.cn-hangzhou.log.aliyuncs.com
 oss-cn-hangzhou.aliyuncs.com
-vod.cn-shanghai.aliyun.com
+vod.cn-shanghai.aliyuns.com
 fonts.googleapis.com
 www.google-analytics.com
 www.googletagmanager.com
