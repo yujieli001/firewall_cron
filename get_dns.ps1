@@ -88,6 +88,7 @@ $forcedSubs = @(
 "oi-wiki.org.w.cdngslb.com",
 "acwing.com",
 "www.acwing.com",
+"www.mxoj.net",
 "video.acwing.com",
 "cdn.acwing.com",
 "play.acwing.com",

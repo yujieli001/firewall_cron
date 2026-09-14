@@ -2,6 +2,7 @@
 a.w9.ip-ddns.com
 acmcoder.com
 acwing.com
+www.mxoj.net
 adl.ccf.org.cn
 aeis.alicdn.com
 all.acmcoder.com.w.kunlunsl.com
