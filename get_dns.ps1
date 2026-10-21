@@ -12,7 +12,7 @@ if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
 $ErrorActionPreference = "Continue"
 
 # Add Go bin to PATH so subfinder/dnsx can be found
-$env:PATH = "S:\Server\Go\bin;" + $env:PATH
+$env:PATH = "S:\Go\bin;" + $env:PATH
 
 $dnsFile = Join-Path $PSScriptRoot "dns_sub.txt"
 
@@ -23,16 +23,18 @@ $dnsFile = Join-Path $PSScriptRoot "dns_sub.txt"
 # ====================================================================
 
 $domains = @(
-#"luogu.com.cn",
-#"acwing.com"
-#"iai.sh.cn",
-#"atcoder.jp",
-#"kpcb.org.cn",
-#"ccf.org.cn",
-#"lanqiaoqingshao.cn",
-#"alicdn.com",
-#"acmcoder.com",
-#"cn-hangzhou.log.aliyuncs.com"
+"luogu.com.cn",
+"acwing.com"
+"iai.sh.cn",
+"atcoder.jp",
+"kpcb.org.cn",
+"ccf.org.cn",
+"lanqiaoqingshao.cn",
+"alicdn.com",
+"acmcoder.com",
+"bigcodeforce.cn",
+"codeforces.com",
+"log.aliyuncs.com"
 )
 
 # ====================================================================
@@ -122,9 +124,14 @@ $enableBruteforce = $true
 
 # ====================================================================
 
-Set-Content -Path $dnsFile -Value $null -Encoding UTF8
+# Output is written atomically in Phase 4 (temp file + rename),
+# so the existing dns_sub.txt stays valid while this script runs
 
 $allSubs = [System.Collections.Generic.HashSet[string]]::new(
+[System.StringComparer]::OrdinalIgnoreCase
+)
+
+$forcedSet = [System.Collections.Generic.HashSet[string]]::new(
 [System.StringComparer]::OrdinalIgnoreCase
 )
 
@@ -144,10 +151,31 @@ foreach ($sub in $forcedSubs) {
 
     if ($sub -and -not $sub.StartsWith("*")) {
         [void]$allSubs.Add($sub)
+        [void]$forcedSet.Add($sub)
     }
 }
 
 Write-Host "[+] Forced subdomains loaded: $($forcedSubs.Count)"
+
+# ====================================================================
+
+# Load main domains
+#
+# Main domains are always kept as well, so the output file
+# always contains both the main domains and their subdomains
+
+# ====================================================================
+
+foreach ($d in $domains) {
+    $d = $d.Trim().ToLower()
+
+    if ($d) {
+        [void]$allSubs.Add($d)
+        [void]$forcedSet.Add($d)
+    }
+}
+
+Write-Host "[+] Main domains loaded: $($domains.Count)"
 
 # ====================================================================
 
@@ -228,7 +256,7 @@ if ($subfinderPath) {
                         -and `
                         -not $sub.StartsWith("*") `
                         -and `
-                        $sub.EndsWith($d)
+                        ($sub -eq $d -or $sub.EndsWith(".$d"))
                     ) {
 
                         if ($allSubs.Add($sub)) {
@@ -286,44 +314,96 @@ if ($enableBruteforce) {
 
         Write-Host "[+] Wordlist: $($words.Count) entries"
 
+        # dnsx -w reads the raw file and does not skip "#" comments,
+        # so hand it the filtered wordlist instead
+        $tmpWordlist = Join-Path $env:TEMP "get_dns_wordlist.tmp"
+
+        Set-Content -Path $tmpWordlist -Value $words -Encoding ASCII
+
         foreach ($d in $domains) {
 
             Write-Host ""
             Write-Host "[*] DNS brute-force: $d"
 
-            $found = 0
+            # Wildcard gate: a random name under this domain should
+            # not resolve; if it does, every candidate would resolve
+            # and brute-force results for this domain are meaningless
+            $probe = "probe" + [guid]::NewGuid().ToString("N").Substring(0, 12) + ".$d"
 
-            foreach ($word in $words) {
+            $wildcard = $false
 
-                $word = $word.Trim()
+            try {
 
-                if (-not $word) {
-                    continue
+                if (Resolve-DnsName -Name $probe -Type A -ErrorAction Stop) {
+                    $wildcard = $true
                 }
 
-                $fqdn = "$word.$d"
+            } catch {
+                # NXDOMAIN -> not a wildcard zone
+            }
 
-                try {
+            if ($wildcard) {
+                Write-Host "[!] ${d}: wildcard DNS detected, skipping"
+                continue
+            }
 
-                    $result = Resolve-DnsName `
-                        -Name $fqdn `
-                        -Type A `
-                        -ErrorAction Stop
+            $found = 0
 
-                    if ($result) {
+            if ($dnsxPath) {
 
-                        if ($allSubs.Add($fqdn)) {
-                            $found++
-                        }
+                # dnsx has built-in bruteforce with high concurrency
+                $alive = & dnsx `
+                    -silent `
+                    -d $d `
+                    -w $tmpWordlist `
+                    -threads 200 `
+                    2>$null
+
+                foreach ($line in $alive) {
+
+                    $fqdn = $line.Trim().ToLower()
+
+                    if ($fqdn -and $allSubs.Add($fqdn)) {
+                        $found++
+                    }
+                }
+
+            } else {
+
+                foreach ($word in $words) {
+
+                    $word = $word.Trim()
+
+                    if (-not $word) {
+                        continue
                     }
 
-                } catch {
-                    # DNS lookup failed, skip
+                    $fqdn = "$word.$d"
+
+                    try {
+
+                        $result = Resolve-DnsName `
+                            -Name $fqdn `
+                            -Type A `
+                            -ErrorAction Stop
+
+                        if ($result) {
+
+                            if ($allSubs.Add($fqdn)) {
+                                $found++
+                            }
+                        }
+
+                    } catch {
+                        # DNS lookup failed, skip
+                    }
                 }
             }
 
             Write-Host "[+] ${d}: DNS brute-force found $found"
         }
+
+        Remove-Item $tmpWordlist -Force -ErrorAction SilentlyContinue
     }
 } else {
 
@@ -357,37 +437,70 @@ if ($enableDnsVerify) {
         [System.StringComparer]::OrdinalIgnoreCase
     )
 
-    $total = $allSubs.Count
-    $current = 0
+    # Forced subdomains are always kept, never dropped by verification
+    $verifiedSubs.UnionWith($forcedSet)
 
-    foreach ($sub in $allSubs) {
+    $toVerify = @(
+        foreach ($sub in $allSubs) {
+            if (-not $forcedSet.Contains($sub)) {
+                $sub
+            }
+        }
+    )
 
-        $current++
+    if ($dnsxPath) {
+
+        Write-Host "[*] Verifying $($toVerify.Count) auto-found domains with dnsx"
+
+        if ($toVerify.Count -gt 0) {
+
+            $resolved = $toVerify |
+                & dnsx -silent -threads 200 2>$null
+
+            foreach ($line in $resolved) {
+
+                $sub = $line.Trim().ToLower()
+
+                if ($sub) {
+                    [void]$verifiedSubs.Add($sub)
+                }
+            }
+        }
+
+    } else {
+
+        $total = $toVerify.Count
+        $current = 0
+
+        foreach ($sub in $toVerify) {
+
+            $current++
+
+            Write-Progress `
+                -Activity "DNS verification" `
+                -Status "$sub" `
+                -PercentComplete (($current / $total) * 100)
+
+            try {
+
+                $result = Resolve-DnsName `
+                    -Name $sub `
+                    -ErrorAction Stop
+
+                if ($result) {
+
+                    [void]$verifiedSubs.Add($sub)
+                }
+
+            } catch {
+                # DNS record not found or unreachable
+            }
+        }
 
         Write-Progress `
             -Activity "DNS verification" `
-            -Status "$sub" `
-            -PercentComplete (($current / $total) * 100)
-
-        try {
-
-            $result = Resolve-DnsName `
-                -Name $sub `
-                -ErrorAction Stop
-
-            if ($result) {
-
-                [void]$verifiedSubs.Add($sub)
-            }
-
-        } catch {
-            # DNS record not found or unreachable
-        }
+            -Completed
     }
-
-    Write-Progress `
-        -Activity "DNS verification" `
-        -Completed
 
     Write-Host "[+] DNS verified before: $($allSubs.Count)"
     Write-Host "[+] DNS verified after: $($verifiedSubs.Count)"
@@ -425,9 +538,21 @@ $finalSubs = $allSubs |
 
 # ====================================================================
 
-$finalSubs | Set-Content `
-    -Path $dnsFile `
-    -Encoding UTF8
+if (-not $finalSubs -or @($finalSubs).Count -eq 0) {
+
+    # Never blank the firewall input on a failed/empty run
+    Write-Host "[!] Final list is empty, keeping previous $dnsFile"
+
+} else {
+
+    $tmpOut = "$dnsFile.tmp"
+
+    $finalSubs | Set-Content `
+        -Path $tmpOut `
+        -Encoding UTF8
+
+    Move-Item -Path $tmpOut -Destination $dnsFile -Force
+}
 
 Write-Host ""
 Write-Host "========================================"
