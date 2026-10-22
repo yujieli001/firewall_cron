@@ -16,7 +16,8 @@ get_dns.py —— 访问 URL 列表, 记录访问全过程中涉及的全部域�
     会真实发起请求, 解析失败的候选不进结果
   * 抓子资源时带 Referer(模拟浏览器), 避免 CDN 防盗链 403
 
-输入格式(脚本顶部 URLS 硬编码), 条目两种写法:
+输入格式(同目录 urls.txt 每行一条; 该文件不存在时才用脚本顶部 URLS 硬编码),
+条目两种写法:
   "https://example.com"                            # 无需登录
   ["https://example.com", "用户名", "密码"]          # 需要登录
 带登录凭据的条目:
@@ -26,6 +27,25 @@ get_dns.py —— 访问 URL 列表, 记录访问全过程中涉及的全部域�
     因此登录条目要写在同站其它条目之前
   * 登录是通用识别: 在首页(或常见登录路径页)找含 <input type=password>
     的表单, 填用户名密码 POST; 需要短信/图形验证码的站无法自动登录
+
+并行结构:
+  URLS 按站点分组, 不同站点各开一个进程全并行(-j 可限并行度); 同站条目
+  留在同一进程内串行处理 —— 登录会话是进程内存里的 cookie, 跨进程传不了,
+  拆开同站条目会丢掉"同站复用登录态"能力。各进程记录到的域名/IP 结束时
+  经各自独立的管道回传父进程合并后统一写出。某站点进程异常终止(崩溃/
+  OOM)时拒绝写出并点名。
+  相比现有 dns.txt 丢失的条目(上次采到、这次没采到)不再一刀切拒写 ——
+  一刀切会让"从 urls.txt 移除某站"之后的每次运行都因同样几条丢失永久
+  拒写(cron 死锁)。条目来源(哪个站点组采到)与连续缺席次数记在同目录
+  dns.meta.json, 按来源分类处理:
+    * 源站点已不在本次 URL 清单: 视为用户移除该站, 随写出直接剪除;
+    * 源站点仍在清单 / 无来源记录: 进入缺席宽限, 条目原样保留进新名单
+      (一次网络抖动不会把在用域名 DROP 断网), 连续缺席 3 次才判定确已
+      消失并剪除;
+    * 无法归因于站点移除的丢失超过旧名单一半: 判采集故障(DNS 半瘫/解析
+      器退化), 拒写。
+  确认接受残缺(站点确已永久移除等)再 --allow-partial: 跳过宽限立即剪除。
+  墙外第三方主机不可达 / 登录失败等常态缺失: 只作诊断信息打印。
 
 IP 收录规则:
   域名解析得到的 IP 不收录 —— 该域名本身已进列表, 且 IP 随 DNS 漂移,
@@ -37,23 +57,28 @@ IP 收录规则:
   * <a> 超链接不跟踪 —— 浏览器不会自动请求它, 跟踪就把脚本变成了整站爬虫
 
 用法:
-  1. 把目标 URL 填进下方 URLS 硬编码列表
+  1. 把目标 URL 填进脚本同目录 urls.txt(每行一条; 无该文件才用 URLS 硬编码)
   2. python3 get_dns.py
 
 输出: 默认写脚本同目录 dns.txt (IPv4、IPv6、域名三组各自排序去重, 原子替换)。
 结果为空时保留旧文件不覆盖, 防止把防火墙白名单输入洗成空。
+同目录 dns.meta.json 记录条目来源与缺席计数, 供上述丢失分类自用 ——
+防火墙不读该文件, 删掉只会让下一次丢失全部走缺席宽限, 无害。
 """
 
 import argparse
 import http.cookiejar
 import ipaddress
+import json
 import os
 import re
 import socket
 import ssl
 import sys
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
+from multiprocessing import get_context
 from html.parser import HTMLParser
 from urllib.parse import urljoin, urldefrag, urlparse, urlencode, quote
 from urllib.request import (HTTPCookieProcessor, HTTPSHandler, ProxyHandler,
@@ -62,7 +87,8 @@ from urllib.request import (HTTPCookieProcessor, HTTPSHandler, ProxyHandler,
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # ====================================================================
-# 目标 URL 列表（硬编码，一行一个，按需增删）
+# 目标 URL 列表(后备): 同目录 urls.txt 存在时以文件为准, 本列表不使用;
+# urls.txt 也不存在才用这里的硬编码。条目两种写法:
 #   无需登录:  "URL"
 #   需要登录:  ["URL", "用户名", "密码"]
 #     —— 该条目先匿名收集一遍, 表单登录成功后再用登录态收集一遍;
@@ -87,12 +113,16 @@ URLS = (
     "https://vjudge.net/article/5268",
     ["https://oj.wlhcode.com","lyj","nbyg2004"],
     "https://www.wlhcode.com",
+    "https://python.microbit.org/v/3",
+    "https://python.microbit.org/v/3/ideas",
+    "https://python.microbit.org/v/3/api",
     ["https://www.mxoj.net/", "lizhenghan", "123456"],
     ["https://www.iai.sh.cn","yujieli","nbyg2004"],
     "https://codeforces.com",
     "https://codeforces.com/problemset",
     "https://codeforces.com/problemset/problem/2276/G",
     ["https://cspsjtest.noi.cn/","yujieli","nbyg2004"],
+    "https://www.noi.cn",
     ["https://gesp.ccf.org.cn","李玉杰","nbyg2004"],
     "https://www.lanqiaoqingshao.cn",
     "https://www.zhixue.com/login.html",
@@ -177,9 +207,63 @@ resolved_ips = set()   # 由域名解析得到的 IP —— 按规则输出时�
 direct_ips = set()     # 直接以 IP 访问的地址 —— 输出只保留这类
 
 
+# getaddrinfo 是原生阻塞调用, 不受 socket timeout 约束: WSL 的 DNS 中继
+# (10.255.255.254) 曾出现"接受 TCP 连接但不回包", 8 个抓取线程永久冻结,
+# 整批 URL 停摆。用守护线程给它加硬超时: 超时按解析失败语义抛 gaierror,
+# 挂死线程泄漏但不拖累别人(数量有界, 进程退出即回收)。
+# 默认硬超时 = 请求超时 + 5s(main/run_group 里折算): 硬超时若低于请求超时,
+# 中继只是变慢(未死)也会把好主机误判进 dead_hosts, 静默产出残缺白名单。
+# GETDNS_DNS_TIMEOUT: 显式秒数覆盖默认; 0 或负数 = 关闭看门狗(每次解析省下
+# 一个线程, 健康网络适用); 非法值告警后按默认。
+def _parse_dns_timeout_env():
+    raw = os.environ.get("GETDNS_DNS_TIMEOUT", "").strip()
+    if not raw:
+        return None                              # 未配置: 按请求超时折算
+    try:
+        val = float(raw)
+    except ValueError:
+        print(f"[!] GETDNS_DNS_TIMEOUT={raw!r} 无法解析,"
+              f" 按默认(请求超时+5s)", file=sys.stderr)
+        return None
+    return max(val, 0.0)                         # 0 = 显式关闭
+
+
+# None = 未显式配置(待折算), 0 = 关闭, >0 = 硬超时秒数
+DNS_HARD_TIMEOUT = _parse_dns_timeout_env()
+
+
+def _apply_default_dns_timeout(request_timeout):
+    """把"未显式配置"折算成 请求超时+5s; spawn 子进程没走 main, 也各自折算。"""
+    global DNS_HARD_TIMEOUT
+    if DNS_HARD_TIMEOUT is None:
+        DNS_HARD_TIMEOUT = request_timeout + 5.0
+
+
 def _tracked_getaddrinfo(*args, **kwargs):
+    if DNS_HARD_TIMEOUT:
+        box = {}
+
+        def _go():
+            try:
+                box["r"] = _orig_getaddrinfo(*args, **kwargs)
+            except BaseException as exc:  # 原样带回, 保留 gaierror 等类型
+                box["e"] = exc
+
+        th = threading.Thread(target=_go, daemon=True)
+        th.start()
+        th.join(DNS_HARD_TIMEOUT)
+        if th.is_alive():
+            raise socket.gaierror(socket.EAI_FAIL,
+                                  f"getaddrinfo 超 {DNS_HARD_TIMEOUT:g}s 未响应,"
+                                  f" 按解析失败处理")
+        if "e" in box:
+            raise box["e"]
+        result = box["r"]
+    else:
+        # 看门狗关闭: 直接内联调用, 省去每次解析一个线程的开销
+        result = _orig_getaddrinfo(*args, **kwargs)
+
     # 先解析、成功才记录: 解析失败的主机没参与本次访问, 对防火墙也无意义
-    result = _orig_getaddrinfo(*args, **kwargs)
     host = args[0] if args else kwargs.get("host")
     if isinstance(host, bytes):
         host = host.decode("utf-8", "ignore")
@@ -418,6 +502,9 @@ class State:
         # 不再浪费超时直接跳过。只由连接层失败(超时/拒绝/DNS 失败/代理不可达)
         # 进入, HTTP 4xx/5xx 与读取中断都不算不可达
         self.dead_hosts = set()
+        # 本组未采全的因素(max-urls 截断/登录失败在此记录, 不可达主机由
+        # run_group 汇总), 随结果回传父进程打印诊断(是否拒写由旧名单对比定)
+        self.problems = []
 
     def make_opener(self):
         # 默认禁用系统代理: 目标域名解析与连接都在本地真实发生, 钩子才记到。
@@ -430,11 +517,6 @@ class State:
             HTTPSHandler(context=self.ctx),
             HTTPCookieProcessor(http.cookiejar.CookieJar()),
         )
-
-    def opener_for(self, url):
-        """按 URL 站点域名选会话: 登录过的站用登录会话, 否则匿名。"""
-        return self.logins.get(site_key(url)) or self.anon
-
 
 # ====================================================================
 # 通用表单登录
@@ -754,6 +836,8 @@ def crawl_site(start_url, state, opener):
                     if not capped:
                         print(f"[!] 达到 --max-urls 上限 {state.args.max_urls}, "
                               f"本遍后续资源不再抓取")
+                        state.problems.append(
+                            f"{url0} 达到 --max-urls 上限, 后续资源未抓取")
                         capped = True
                     break
                 refer[u] = parent
@@ -783,6 +867,82 @@ def write_output(path, doms, ipset):
     os.replace(tmp, path)
 
 
+# 相比旧名单丢失条目的处理参数(分类逻辑见模块 docstring)
+MISSING_GRACE = 3       # 无法归因于站点移除的丢失宽限保留的运行周期数
+MASS_LOSS_RATIO = 0.5   # 此类丢失超过旧名单该比例判采集故障, 拒写
+
+
+def _is_ip_literal(s):
+    try:
+        ipaddress.ip_address(s)
+        return True
+    except ValueError:
+        return False
+
+
+def meta_path_for(out_path):
+    """元数据与输出同名: dns.txt -> dns.meta.json (防火墙只读 dns.txt)。"""
+    return os.path.splitext(out_path)[0] + ".meta.json"
+
+
+def load_meta(path):
+    """读条目来源/缺席计数元数据。缺失或损坏一律按空处理: 只影响丢失
+    归属精度(全部走缺席宽限), 不该因此挡住采集写出。"""
+    try:
+        with open(path, encoding="utf-8") as f:
+            raw = json.load(f)
+        return {"sources": {str(k): str(v)
+                            for k, v in (raw.get("sources") or {}).items()},
+                "missing": {str(k): int(v)
+                            for k, v in (raw.get("missing") or {}).items()}}
+    except (OSError, ValueError, TypeError, AttributeError):
+        return {"sources": {}, "missing": {}}
+
+
+def save_meta(path, sources, missing):
+    """与 write_output 同样的临时文件+rename 原子替换; 写失败只告警 ——
+    元数据缺失只降级下次丢失归属, 不值得让整个采集以非零退出。"""
+    tmp = path + ".tmp"
+    try:
+        with open(tmp, "w", encoding="utf-8", newline="\n") as f:
+            json.dump({"v": 1, "sources": sources, "missing": missing},
+                      f, ensure_ascii=False, sort_keys=True)
+            f.write("\n")
+        os.replace(tmp, path)
+    except OSError as exc:
+        print(f"[!] 元数据 {path} 写入失败(不影响本次名单): {exc}", file=sys.stderr)
+
+
+def load_previous_lines(path):
+    """读现有输出文件的条目集合(write_output 的逆: 每行一个 IP/域名)。
+    文件不存在/不可读返回空集 —— 首跑无可比, 不判丢失。"""
+    try:
+        with open(path, encoding="utf-8", errors="replace") as f:
+            return {line.strip() for line in f if line.strip()}
+    except OSError:
+        return set()
+
+
+def load_urls_file(path, parser):
+    """urls.txt 每行一条目: "URL" 或 "URL 用户名 密码"(空白分隔, 密码可带
+    空格); # 开头行与空行忽略。返回与硬编码 URLS 同形状的条目元组。"""
+    items = []
+    try:
+        with open(path, encoding="utf-8-sig") as f:   # 容忍记事本 BOM
+            for lineno, line in enumerate(f, 1):
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                fields = line.split(None, 2)
+                if len(fields) == 2:      # 只有 URL+用户名: 多半是漏写了密码
+                    parser.error(f"{path} 第 {lineno} 行只有 2 个字段, 登录条目"
+                                 f"需 'URL 用户名 密码': {line!r}")
+                items.append(fields[0] if len(fields) == 1 else fields)
+    except OSError as exc:
+        parser.error(f"读取 {path} 失败: {exc}")
+    return tuple(items)
+
+
 def parse_entries(urls_cfg, parser):
     """URLS 条目 → (url, 用户名, 密码); 登录条目写法为 [url, user, password]。"""
     entries = []
@@ -796,6 +956,100 @@ def parse_entries(urls_cfg, parser):
             parser.error(f"URLS 登录条目格式应为 [URL, 用户名, 密码]: {item!r}")
         entries.append((str(item[0]).strip(), str(item[1]), str(item[2])))
     return entries
+
+
+def collect_entry(url, user, password, state):
+    """单个 URLS 条目的收集(登录条目匿名/登录态各收一遍)。"""
+    key = site_key(normalize(url)[0] or url)
+    if user is not None:
+        # 登录条目: 匿名先收一遍(登录前), 登录成功后再收一遍(登录后)
+        print(f"[*] 登录前(匿名)收集: {url}")
+        crawl_site(url, state, state.anon)
+        if key not in state.logins:
+            print(f"[*] 尝试登录: {url} (用户: {user})")
+            status, opener, note = login_site(state, normalize(url)[0],
+                                              user, password)
+            if opener is not None and status != "fail":
+                state.logins[key] = opener
+                if status == "ok":
+                    print(f"[+] 登录成功: {key}")
+                else:
+                    print(f"[!] 登录结果未确认: {note}")
+            else:
+                print(f"[!] 登录失败: {note}, 跳过登录后收集")
+                if "已判定不可达" not in note:    # 主机判死另有专门汇总
+                    state.problems.append(f"登录失败 {key}: {note}")
+        if key in state.logins:
+            print(f"[*] 登录后收集: {url}")
+            crawl_site(url, state, state.logins[key])
+    else:
+        # 用已规范化的站点键查登录会话 —— 直接拿未规范化的原始条目串去
+        # urlparse, 不带 scheme 的条目(合法写法)解析不出 hostname, 会错拿匿名会话
+        opener = state.logins.get(key) or state.anon
+        tag = "登录态" if opener is not state.anon else "匿名"
+        print(f"[*] 收集({tag}): {url}")
+        crawl_site(url, state, opener)
+
+
+def run_group(job):
+    """站点分组进程入口(顶层函数, 供 multiprocessing 序列化)。同站条目
+    串行以复用登录会话; 子进程里 domains/direct_ips/resolved_ips 是各自
+    私有副本(socket 钩子记进本进程), 返回交父进程合并。"""
+    args, group = job
+    _apply_default_dns_timeout(args.timeout)  # spawn 子进程没走 main, 就地折算
+    install_hooks()   # spawn 启动方式不继承父进程钩子; fork 下重复安装幂等
+    domains.clear()
+    direct_ips.clear()
+    resolved_ips.clear()
+    try:
+        # 多进程共写 stdout: 整行交错(-u 的 write_through 会让 print 分两次
+        # write 被别的进程插进来, 必须同时关掉)
+        sys.stdout.reconfigure(write_through=False, line_buffering=True)
+    except Exception:
+        pass
+    print(f"[*] ===== 站点组 {group[0][0]} ({len(group)} 条目) =====")
+    state = State(args)
+    for url, user, password in group:
+        collect_entry(url, user, password, state)
+    probs = list(dict.fromkeys(state.problems))      # 去重保序
+    if state.dead_hosts:
+        probs.append(f"不可达主机 {len(state.dead_hosts)} 个, 其上 URL 已跳过: "
+                     f"{', '.join(sorted(state.dead_hosts))}")
+    return sorted(domains), sorted(direct_ips), sorted(resolved_ips), probs
+
+
+def _group_worker(job, conn, gkey):
+    """站点组进程函数体: 结果经本组专属管道发送后置键退出。任何异常/被外部
+    杀死都表现为"该组无结果", 由父进程按缺失处理并点名。"""
+    try:
+        conn.send((gkey, run_group(job)))
+    except BaseException as exc:    # 含 SystemExit: 换成明确日志而非进程无声消失
+        print(f"[!] 站点组 {gkey} 工作进程异常: {type(exc).__name__}: {exc}",
+              file=sys.stderr)
+    finally:
+        try:
+            conn.close()
+        except OSError:
+            pass
+
+
+def _pipe_reader(conn, gkey, results_map, map_lock):
+    """父进程侧读线程: 收整帧结果存进 results_map。worker 被杀在发送中途时
+    recv 会永久阻塞在半帧上 —— 本线程是守护线程, 主流程只限时 join, 超时即
+    按该组缺失处理。各组管道互相独立: 一组半帧不会像共享 Queue 那样把其后
+    所有帧都错位吞掉(半帧会让共享管道上后续帧全部解析错乱)。"""
+    try:
+        got = conn.recv()
+    except Exception:               # EOFError(未及发送)/OSError/反序列化失败
+        return
+    finally:
+        try:
+            conn.close()
+        except OSError:
+            pass
+    if isinstance(got, tuple) and len(got) == 2 and got[0] == gkey:
+        with map_lock:
+            results_map[gkey] = got[1]
 
 
 def main(argv=None):
@@ -814,60 +1068,154 @@ def main(argv=None):
                              "1=再抓页面引用的资源, 2=连同资源里的 HTML/CSS "
                              "引用再深一层 (默认 2)")
     parser.add_argument("-c", "--concurrency", type=int, default=16,
-                        help="并发数 (默认 16)")
+                        help="单站点进程内的线程并发数 (默认 16)")
+    parser.add_argument("-j", "--jobs", type=int, default=0,
+                        help="并行的站点进程数, 0=每个站点组各开一个进程"
+                             " (默认 0, 全并行)")
     parser.add_argument("-m", "--max-urls", type=int, default=5000,
                         help="单遍抓取最多 URL 数, 登录条目前后两遍单独计 (默认 5000)")
     parser.add_argument("--max-bytes", type=int, default=2 * 1024 * 1024,
                         help="单个可解析响应的最大读取字节数 (默认 2MB)")
+    parser.add_argument("--urls", metavar="FILE",
+                        help="从文件读取 URL 清单, 每行: URL [用户名 密码], "
+                             "# 开头为注释行; 未指定时自动探测脚本同目录 "
+                             "urls.txt, 该文件也不存在才用脚本内硬编码 URLS")
+    parser.add_argument("--allow-partial", action="store_true",
+                        help="有站点进程异常终止、或丢失条目超过旧名单一半判"
+                             "采集故障时也写出结果; 并放弃缺席宽限, 未采到条"
+                             "目立即剪除(默认保留)")
     parser.add_argument("--proxy", metavar="URL", default="",
                         help="经 HTTP(S) 代理抓取, 用于直连被墙的站(如 vjudge)。"
                              "WSL 内访问 Windows 代理: 用路由网关 IP 且代理需开"
                              "允许局域网, 例 http://<网关IP>:7890")
     args = parser.parse_args(argv)
+    _apply_default_dns_timeout(args.timeout)
+    if DNS_HARD_TIMEOUT and DNS_HARD_TIMEOUT <= args.timeout:
+        print(f"[!] DNS 硬超时 {DNS_HARD_TIMEOUT:g}s 不大于请求超时"
+              f" {args.timeout:g}s: 中继仅变慢(未死)时好主机也会被误判不可达,"
+              f" 结果可能静默残缺", file=sys.stderr)
     out_path = args.output or os.path.join(SCRIPT_DIR, "dns.txt")
+    meta_file = meta_path_for(out_path)
 
-    entries = parse_entries(URLS, parser)
+    urls_path = args.urls or os.path.join(SCRIPT_DIR, "urls.txt")
+    if args.urls or os.path.exists(urls_path):
+        print(f"[+] URL 清单: {urls_path}")
+        urls_src = load_urls_file(urls_path, parser)
+    else:
+        urls_src = URLS
+    entries = parse_entries(urls_src, parser)
     if not entries:
-        parser.error("URLS 列表为空, 请在脚本顶部填入目标 URL")
+        parser.error("URL 清单为空, 请写入 urls.txt 或脚本顶部 URLS")
 
     install_hooks()
+    domains.clear()        # 同进程内二次调用 main() 时不残留上次结果
+    direct_ips.clear()
+    resolved_ips.clear()
 
     print("=" * 44)
     print(" get_dns: 记录 URL 访问全过程中的域名 / IP")
     print("=" * 44)
     print(f"[+] 输入条目: {len(entries)} 个, 深度: {args.depth}, "
-          f"并发: {args.concurrency}")
-    state = State(args)
-    try:
-        for url, user, password in entries:
-            key = site_key(normalize(url)[0] or url)
-            if user is not None:
-                # 登录条目: 匿名先收一遍(登录前), 登录成功后再收一遍(登录后)
-                print(f"[*] 登录前(匿名)收集: {url}")
-                crawl_site(url, state, state.anon)
-                if key not in state.logins:
-                    print(f"[*] 尝试登录: {url} (用户: {user})")
-                    status, opener, note = login_site(state, normalize(url)[0],
-                                                      user, password)
-                    if opener is not None and status != "fail":
-                        state.logins[key] = opener
-                        if status == "ok":
-                            print(f"[+] 登录成功: {key}")
-                        else:
-                            print(f"[!] 登录结果未确认: {note}")
+          f"每进程线程: {args.concurrency}")
+
+    # 按站点分组: 不同站点各开一个进程全并行; 同站条目留在同一进程内串行
+    # —— 登录会话是进程内存里的 cookie, 跨进程传不了(登录条目写在同站前面,
+    # 组内保持 URLS 原顺序即可复用)
+    groups, order = {}, []
+    for e in entries:
+        gkey = site_key(normalize(e[0])[0] or e[0])
+        if gkey not in groups:
+            groups[gkey] = []
+            order.append(gkey)
+        groups[gkey].append(e)
+    tasks = [(k, (args, groups[k])) for k in order]
+    nproc = min(args.jobs, len(tasks)) if args.jobs > 0 else len(tasks)
+    print(f"[+] 站点组: {len(tasks)} 个, 并行进程: {nproc}")
+    # gkey -> (domains, direct_ips, resolved_ips, problems)
+    results_map = {}
+    source_of = {}                       # 条目 -> 采到它的站点组键(丢失归属)
+    map_lock = threading.Lock()
+    if len(tasks) == 1:
+        # 与多进程路径同等语义: 中断干净退出 130, 处理异常记作该组失败
+        try:
+            results_map[order[0]] = run_group(tasks[0][1])
+        except KeyboardInterrupt:
+            print("\n[!] 已中断, 不写入结果", file=sys.stderr)
+            return 130
+        except Exception as exc:
+            print(f"[!] 站点组 {order[0]} 处理异常: {type(exc).__name__}: {exc}",
+                  file=sys.stderr)
+    else:
+        # 每站点组一个进程 + 专属结果管道, 不用 Pool: Pool 不察觉 worker 被
+        # 外部杀死(OOM/段错误), 等待会永久挂起; 这里死亡即可见、可点名。
+        # 也不用共享 Queue: worker 写到半帧被杀会让其后所有帧错位成坏帧, 且
+        # Queue.get 见半帧可读就进 _recv_bytes 无限阻塞。改为每组一根管道、
+        # 一个守护读线程: 半帧只卡住本组读线程, 主流程限时 join 后按该组
+        # 缺失处理
+        ctx = get_context("fork") if hasattr(os, "fork") else get_context("spawn")
+        running, todo = [], list(tasks)
+        readers = {}                          # gkey -> 该组读线程
+        sys.stdout.flush()  # 先刷父进程缓冲: 防 fork 把未刷出字节复制进子进程重复打印
+        try:
+            while todo or running:
+                while todo and len(running) < nproc:      # 空位即补
+                    gkey, job = todo.pop(0)
+                    rd, wr = ctx.Pipe(duplex=False)
+                    p = ctx.Process(target=_group_worker,
+                                    args=(job, wr, gkey), name=gkey)
+                    p.start()
+                    wr.close()    # 父进程放掉写端副本, 否则子进程退出后读端等不到 EOF
+                    th = threading.Thread(target=_pipe_reader,
+                                          args=(rd, gkey, results_map, map_lock),
+                                          daemon=True, name=f"read-{gkey}")
+                    th.start()
+                    readers[gkey] = th
+                    running.append((p, gkey))
+                alive = []
+                for p, gkey in running:
+                    if p.is_alive():
+                        alive.append((p, gkey))
                     else:
-                        print(f"[!] 登录失败: {note}, 跳过登录后收集")
-                if key in state.logins:
-                    print(f"[*] 登录后收集: {url}")
-                    crawl_site(url, state, state.logins[key])
-            else:
-                opener = state.opener_for(url)
-                tag = "登录态" if opener is not state.anon else "匿名"
-                print(f"[*] 收集({tag}): {url}")
-                crawl_site(url, state, opener)
-    except KeyboardInterrupt:
-        print("\n[!] 已中断, 不写入结果", file=sys.stderr)
-        return 130
+                        p.join()              # 回收; 结果帧由其专属读线程自行收取
+                running = alive
+                if todo or running:
+                    time.sleep(0.2)                       # 让出 CPU 的低速轮询
+        except KeyboardInterrupt:
+            print("\n[!] 已中断, 不写入结果", file=sys.stderr)
+            return 130
+        finally:
+            for p, _ in running:
+                if p.is_alive():
+                    p.terminate()
+        # 正常退出组的帧早已写完入管, 读线程秒回; 限时宽限只等半帧卡住的
+        # 读线程, 超时即按该组缺失处理(守护线程随本进程退出回收)
+        grace = time.monotonic() + 5.0
+        for th in readers.values():
+            th.join(timeout=max(0.0, grace - time.monotonic()))
+
+    # 无结果 = 该组进程异常终止(内部打印过日志)或被外部杀死(OOM 等)
+    failed = [k for k in order if k not in results_map]
+    if failed:
+        print(f"[!] {len(failed)} 个站点组未完成: {', '.join(failed)}",
+              file=sys.stderr)
+    for k in order:
+        if k not in results_map:
+            continue
+        doms, dip, rip, probs = results_map[k]
+        domains.update(doms)
+        direct_ips.update(dip)
+        resolved_ips.update(rip)
+        for d in doms:
+            source_of[d] = k
+        for d in dip:
+            source_of[d] = k
+        print(f"[+] 站点组 {k}: 域名 {len(doms)} 个")
+        # 不可达主机/max-urls 截断/登录失败多为墙外第三方资源与常态问题:
+        # 上次采集同样没有的条目, 白名单少它并无损失, 只作诊断信息打印。
+        # 真正会挡站在用功能的是"上次采到、这次丢了" —— 由下方与旧 dns.txt
+        # 的对比把关, 不在这里一刀切
+        for msg in probs:
+            print(f"[*] 站点组 {k} 未采全: {msg}")
 
     print("=" * 44)
     # IP 收录规则: 域名解析而来的 IP 不收录, 只保留直接以 IP 访问的地址
@@ -882,9 +1230,71 @@ def main(argv=None):
         print(f"[!] 结果为空, 保留原有 {out_path}", file=sys.stderr)
         print("    (所有 URL 都访问失败? 检查网络后重跑)", file=sys.stderr)
         return 1
-    write_output(out_path, domains, final_ips)
+
+    # 残缺判定核心: 与现有 dns.txt 对比, 丢失条目按来源分类(详见模块
+    # docstring): 源站点已移出本次清单的随写出剪除; 其余进缺席宽限,
+    # 原样保留进新名单(抖动不把在用域名 DROP 断网), 连续缺席满
+    # MISSING_GRACE 次才剪除。只有站点进程未完成, 或无法归因的丢失
+    # 铺满旧名单一半(疑似 DNS 故障/采集器退化)才拒写。
+    old_lines = load_previous_lines(out_path)
+    meta = load_meta(meta_file)
+    active_keys = set(order)
+    lost = old_lines - (domains | final_ips)
+    carry, cut_orphan, cut_gone, missing_new = set(), set(), set(), {}
+    for e in sorted(lost):
+        src = meta["sources"].get(e)
+        if src and src not in active_keys:
+            cut_orphan.add(e)                    # 源站点已从 urls.txt 移除
+            continue
+        streak = meta["missing"].get(e, 0) + 1
+        if streak >= MISSING_GRACE:
+            cut_gone.add(e)                      # 连续缺席, 判定确已消失
+        else:
+            carry.add(e)                         # 宽限保留
+            missing_new[e] = streak
+
+    def _show(msg, items):
+        more = f" ... 等共 {len(items)} 个" if len(items) > 20 else ""
+        print(f"{msg}: {', '.join(sorted(items)[:20])}{more}")
+
+    if cut_orphan:
+        _show(f"[i] {len(cut_orphan)} 个条目的源站点已不在本次 URL 清单"
+              f"(视为站点移除, 随写出剪除)", cut_orphan)
+    if cut_gone:
+        _show(f"[i] {len(cut_gone)} 个条目连续 {MISSING_GRACE} 次未采到"
+              f"(判定已消失, 随写出剪除)", cut_gone)
+    if carry:
+        _show(f"[i] {len(carry)} 个条目本次未采到"
+              f"(宽限保留进新名单, 连续缺席 {MISSING_GRACE} 次才剪除)", carry)
+    if args.allow_partial:                       # 用户确认接受残缺: 放弃宽限
+        carry.clear()
+        missing_new.clear()
+
+    unexplained = carry | cut_gone
+    mass_loss = bool(old_lines) and len(unexplained) > MASS_LOSS_RATIO * len(old_lines)
+    if mass_loss:
+        print(f"[!] 相比现有 {out_path} 有 {len(unexplained)} 个条目采不到,"
+              f" 超过旧名单 {len(old_lines)} 条的一半: 疑似 DNS 故障或采集器"
+              f"退化, 不信任本次结果", file=sys.stderr)
+    rc = 2 if failed else 0
+    if (failed or mass_loss) and not args.allow_partial:
+        print("[!] 拒绝写出白名单(原因见上); 确认接受残缺再 --allow-partial 重跑",
+              file=sys.stderr)
+        return 2
+
+    out_doms, out_ips = set(domains), set(final_ips)
+    for e in carry:                              # 宽限保留: 原样带入新名单
+        (out_ips if _is_ip_literal(e) else out_doms).add(e)
+    write_output(out_path, out_doms, out_ips)
+    # 元数据: 新采到的记本次来源(只记真正写进名单的 —— 直连 IP 里经域名
+    # 解析而来者已被剔除, 记了徒增噪声); 宽限保留的沿用上次来源与缺席
+    # 计数; 被剪除的与 --allow-partial 放弃保留的不再记录, 采到的条目清零计数
+    written = out_doms | out_ips
+    sources_new = {e: meta["sources"][e] for e in carry if e in meta["sources"]}
+    sources_new.update({e: k for e, k in source_of.items() if e in written})
+    save_meta(meta_file, sources_new, missing_new)
     print(f"[+] 已写入: {out_path}")
-    return 0
+    return rc
 
 
 if __name__ == "__main__":

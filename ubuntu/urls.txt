@@ -1,0 +1,38 @@
+# get_dns.py 的 URL 清单: 每行一条, 空白分隔字段
+#   URL                    —— 匿名抓取
+#   URL 用户名 密码         —— 登录抓取(密码可含空格; 登录条目写在同站其它条目之前, 同站自动复用登录态)
+# # 开头行与空行忽略; 不带 scheme 的 URL 按 https 优先、失败自动退 http
+# 注意: 本文件存在时完全取代脚本内硬编码 URLS —— 增删条目请改这里
+
+http://www.acwing.com yujieli nbyg2004
+https://www.acwing.com/activity
+https://www.acwing.com/activity/content/32
+https://www.acwing.com/file_system/file/content/whole/index/content/1297182
+https://www.luogu.com.cn yujieli nbyg2004
+https://www.luogu.com.cn/problem/list
+https://www.luogu.com.cn/problem/P1002
+https://www.luogu.com.cn/user/mine/training
+https://www.luogu.com.cn/user/100928
+https://www.luogu.com.cn/discuss?forum=miaomiaowu
+https://vjudge.net lzh000 nbyg2004
+https://vjudge.net/contest
+https://vjudge.net/workbook
+https://vjudge.net/article/5268
+https://oj.wlhcode.com lyj nbyg2004
+https://www.wlhcode.com
+https://python.microbit.org/v/3
+https://python.microbit.org/v/3/ideas
+https://python.microbit.org/v/3/api
+https://www.mxoj.net/ lizhenghan 123456
+https://www.iai.sh.cn yujieli nbyg2004
+https://codeforces.com
+https://codeforces.com/problemset
+https://codeforces.com/problemset/problem/2276/G
+https://cspsjtest.noi.cn/ yujieli nbyg2004
+https://www.noi.cn
+https://gesp.ccf.org.cn 李玉杰 nbyg2004
+https://www.lanqiaoqingshao.cn
+https://www.zhixue.com/login.html
+https://atcoder.jp yujieli nbyg2004
+https://atcoder.jp/contests/arc233
+https://atcoder.jp/ranking
