@@ -1,3 +1,0 @@
-# Shell 脚本必须保持 LF: autocrlf=true 的 Windows 机器一旦将其转为 CRLF,
-# 脚本在 Ubuntu 上会因行尾 \r 无法执行
-*.sh text eol=lf

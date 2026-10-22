@@ -1,8 +1,8 @@
 # allow_dns.ps1
-# Resolve IPs from dns_sub.txt and configure firewall
+# Resolve IPs from dns.txt and configure firewall
 
 $scriptDir = $PSScriptRoot
-$dnsFile  = Join-Path $scriptDir "dns_sub.txt"
+$dnsFile  = Join-Path $scriptDir "dns.txt"
 $ipv4File = Join-Path $scriptDir "ipv4.txt"
 $ipv6File = Join-Path $scriptDir "ipv6.txt"
 

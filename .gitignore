@@ -1,3 +1,5 @@
 __pycache__/
 *.pyc
-ubuntu/dns.meta.json
+dns.meta.json
+node_modules/
+.mcp.json

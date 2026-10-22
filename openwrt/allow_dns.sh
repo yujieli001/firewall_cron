@@ -1,6 +1,6 @@
 #!/bin/sh
 
-DNS=/etc/luci-uploads/dns_sub.txt
+DNS=/etc/luci-uploads/dns.txt
 IPV4=/etc/luci-uploads/ipv4.txt
 IPV6=/etc/luci-uploads/ipv6.txt
 
