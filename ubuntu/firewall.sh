@@ -89,6 +89,15 @@ DNS_DOMAINS=(
 #   timeout 5: 兜住 glibc 解析器默认 5s×2 的重试, 防 DNS 故障时长挂
 #   走系统解析器: /etc/hosts 手工记录与本地 DNS 缓存自动生效
 #   取全部地址而非 tail -n1: 多 A 记录的 CDN 域名旧版每次只随机放行一个 IP
+#
+# 解析结果按 "域名<TAB>地址" 回流而非只回流地址: 保住名字与地址的对应
+# 关系, 事后才知道哪些域名一个地址都没拿到。P16 并发下 getent 偶发超时
+# 会让个别域名静默丢失（本机 DNS 中继在高并发下会卡即是同类问题）, 这类
+# 域名重试一轮, 尽力保证 dns.txt 每个域名都进白名单。
+# "解析失败" 判定为两个地址族都拿不到合法地址: 仅单族为空多半是域名本身
+# 只有 A 或只有 AAAA 记录, 属正常而非故障, 不重试, 免得为单族缺失把
+# 防火墙空窗期拉长一倍。重试后仍失败的域名只大声告警不中止——它们多数
+# 是已经关站死掉的域名, 且此刻旧规则已清空, 中止等于整机裸奔。
 # ====================================================================
 
 # DNS 预检: 解析器整体不可用时快速退出保持旧规则, 不空跑上千次注定失败的查询
@@ -98,14 +107,45 @@ if ! timeout 5 getent ahostsv4 baidu.com >/dev/null 2>&1 \
   exit 1
 fi
 
+# 单域名解析 worker, 由 xargs 经 bash -c 调起, 故必须 export -f 才能被子
+# bash 从环境里导入。成功时每个地址输出一行 "域名<TAB>地址"; 解析失败或
+# 该族无记录时静默无输出, 由上层按名字聚合后判定是否需要重试。
+resolve_one() { # resolve_one <ahostsv4|ahostsv6> <域名>
+  local family=$1 name=$2 out addr
+  out=$(timeout 5 getent "$family" "$name" 2>/dev/null) || return 0
+  [ -n "$out" ] || return 0
+  while read -r addr; do
+    [ -n "$addr" ] && printf '%s\t%s\n' "$name" "${addr%% *}"
+  done <<<"$out"
+  return 0
+}
+export -f resolve_one
+
+# 一轮并行解析: 从参数读域名, 输出通过地址格式校验的 "域名<TAB>地址"。
+# 域名经 bash -c 落到 $0（xargs 把输入项追加为 bash 的首个位置参数）,
+# 全程带引号, 不会二次展开。
+probe_round() { # probe_round <地址族> <合法地址awk正则> <域名...>
+  local family=$1 regex=$2
+  shift 2
+  [ "$#" -gt 0 ] || return 0
+  printf '%s\n' "$@" \
+    | xargs -r -P 16 -n 1 bash -c "resolve_one $family \"\$0\"" 2>/dev/null \
+    | awk -F'\t' -v re="$regex" '$2 ~ re'
+}
+
+# awk 的 -v 赋值会先做一遍转义处理, 故正则里的 \. 在此要写成 \\.
+RE_ADDR4='^([0-9]{1,3}\\.){3}[0-9]{1,3}$'
+RE_ADDR6='^[0-9A-Fa-f:]+:[0-9A-Fa-f:]+$'
+
 # ====================================================================
 # 先清空防火墙全部原有规则, 再由本脚本从零装载白名单:
 # filter 表内置链策略恢复 ACCEPT 后整表清空、删除自定义链,
 # nat/mangle 等表存在则一并清（会连带清掉 ufw/docker 等的规则）; IPv4/IPv6 各一遍。
 # 先改策略后清规则, 顺序不可反: 若旧策略是 DROP, 先清规则会瞬间锁死整机。
 # 从此刻到白名单链挂上, 过滤规则为空——列表检查与 DNS 预检已在前面完成,
-# 该窗口通常只有解析所用的几秒; 若解析中途失败退出, 会带着空规则集大声
-# 报错, 需人工重跑（"从零开始"语义的必然代价）
+# 该窗口通常只有解析所用的几秒。iptables 规则每次都是重建的, 但白名单地址
+# 不会丢: 历次解析结果累积在 $STATE_DIR, 本轮解析不出东西时退回历史集合
+# 装载; 只有"本轮 + 历史"双双为空才会带着空规则集退出（需人工重跑）
 # ====================================================================
 
 # 部分机器内核禁用了 IPv6: ip6tables 命令存在但操作会报错。
@@ -134,27 +174,139 @@ if [ "$HAVE_V6" -eq 1 ]; then
   reset_firewall ip6tables
 fi
 
-mapfile -t IPS4 < <(
-  printf '%s\n' "${domains[@]}" "${DNS_SERVERS[@]}" "${DNS_DOMAINS[@]}" \
-    | xargs -r -P 16 -n 1 timeout 5 getent ahostsv4 \
-    | awk '{print $1}' \
-    | grep -E '^([0-9]{1,3}\.){3}[0-9]{1,3}$' | sort -u
-)
+ALL_NAMES=( "${domains[@]}" "${DNS_SERVERS[@]}" "${DNS_DOMAINS[@]}" )
 
-mapfile -t IPS6 < <(
-  printf '%s\n' "${domains[@]}" "${DNS_SERVERS[@]}" "${DNS_DOMAINS[@]}" \
-    | xargs -r -P 16 -n 1 timeout 5 getent ahostsv6 \
-    | awk '{print $1}' \
-    | grep -E '^[0-9A-Fa-f:]+:[0-9A-Fa-f:]+$' | sort -u
-)
+# 本轮解析结果: 地址去重与"已拿到地址的域名"集合, 关联数组键天然去重
+declare -A RUN4=() RUN6=() OK_NAME=()
 
-# 解析全军覆没时不能带病继续装载。注意此刻旧规则已被清空, 必须修复 DNS 后重跑
+collect_pairs() { # collect_pairs <v4|v6> <"域名<TAB>地址"...>
+  local fam=$1 pair name addr
+  shift
+  for pair in "$@"; do
+    # 防御: 没有 TAB 或字段为空的畸形行跳过。正常路径已被 probe_round 的
+    # 格式校验拦下, 这里只兜底, 免得给关联数组塞进空下标
+    case $pair in
+      *$'\t'*) ;;
+      *) continue ;;
+    esac
+    name=${pair%%$'\t'*}
+    addr=${pair#*$'\t'}
+    { [ -n "$name" ] && [ -n "$addr" ]; } || continue
+    addr=${addr,,}                  # 统一小写: 同一 IPv6 不因大小写差异重复入库
+    if [ "$fam" = v4 ]; then RUN4["$addr"]=1; else RUN6["$addr"]=1; fi
+    OK_NAME["$name"]=1
+  done
+}
+
+print_sample() { # print_sample <域名...>: 失败名单可能几百个, 最多列 20 个防刷屏
+  local arr=( "$@" ) n=${#arr[@]} lim=20 i
+  (( n < lim )) && lim=$n
+  for (( i = 0; i < lim; i++ )); do echo "    ${arr[$i]}" >&2; done
+  if (( n > lim )); then echo "    ...（共 $n 个）" >&2; fi
+}
+
+mapfile -t PAIRS4 < <(probe_round ahostsv4 "$RE_ADDR4" "${ALL_NAMES[@]}")
+mapfile -t PAIRS6 < <(probe_round ahostsv6 "$RE_ADDR6" "${ALL_NAMES[@]}")
+collect_pairs v4 "${PAIRS4[@]}"
+collect_pairs v6 "${PAIRS6[@]}"
+
+# 首轮两个地址族都颗粒无收的域名: 并发超时/解析器抖动的典型症状, 重试一次
+pending=()
+for name in "${ALL_NAMES[@]}"; do
+  [ "${OK_NAME[$name]+x}" ] || pending+=("$name")
+done
+
+RETRY_FAILED=()
+if [ "${#pending[@]}" -gt 0 ]; then
+  echo "[+] 首轮 ${#pending[@]} 个域名未解析到任何地址, 重试一次:"
+  print_sample "${pending[@]}"
+  mapfile -t PAIRS4 < <(probe_round ahostsv4 "$RE_ADDR4" "${pending[@]}")
+  mapfile -t PAIRS6 < <(probe_round ahostsv6 "$RE_ADDR6" "${pending[@]}")
+  collect_pairs v4 "${PAIRS4[@]}"
+  collect_pairs v6 "${PAIRS6[@]}"
+  for name in "${pending[@]}"; do
+    [ "${OK_NAME[$name]+x}" ] || RETRY_FAILED+=("$name")
+  done
+  if [ "${#RETRY_FAILED[@]}" -gt 0 ]; then
+    echo "[!] 以下 ${#RETRY_FAILED[@]} 个域名重试后仍解析失败, 本次不会进白名单:" >&2
+    print_sample "${RETRY_FAILED[@]}"
+  else
+    echo "[+] 重试后全部解析成功"
+  fi
+fi
+
+# ====================================================================
+# 增量累积: 白名单只增不减, 装载 历史 ∪ 本轮
+#   CDN/云厂商对同一域名做 DNS 轮询, 单次查询只返回地址池里的一个子集
+#   （实测 65 秒内就有约 100/637 个域名换了地址集合）。只装单次快照必然
+#   漏掉池子其余部分, 表现为"上一秒还能访问, 刷新后就断"。历次运行解析到
+#   的地址全部保留并去重, 池子会被逐步覆盖全。
+#   历史存在 $STATE_DIR（可用同名环境变量改写, 便于测试）, 与 iptables
+#   解耦: WSL 重启、规则被清空都不丢; 顺带让 DNS 整体故障时还能退回历史
+#   集合装载, 而不是带着空规则集裸奔。
+#   代价是放行面单调扩大: 云厂商会回收再分配地址, 攒久了等于顺带放行别
+#   人新上线的站点。想收敛就直接删掉状态文件重跑一次, 重新开始累积。
+# ====================================================================
+STATE_DIR="${STATE_DIR:-/var/lib/firewall_cron}"
+STATE4="$STATE_DIR/whitelist4.txt"
+STATE6="$STATE_DIR/whitelist6.txt"
+
+load_state() { # load_state <状态文件> <目标关联数组名> <awk地址正则>
+  local file=$1 line
+  local -n dest=$2
+  local regex=$3
+  [ -f "$file" ] || return 0
+  # 边读边做格式校验: 文件被手工编辑过或写坏时, 脏行不会混进规则
+  while IFS= read -r line; do
+    dest["$line"]=1
+  done < <(awk -v re="$regex" '$1 ~ re {print tolower($1)}' "$file")
+  return 0
+}
+
+save_state() { # save_state <状态文件> <来源关联数组名>
+  local file=$1 tmp
+  local -n src=$2
+  # 空集合绝不覆盖已有历史: 一次解析失败不该把历次累积的成果清零
+  [ "${#src[@]}" -gt 0 ] || return 0
+  mkdir -p "$STATE_DIR"
+  tmp="${file}.tmp.$$"
+  printf '%s\n' "${!src[@]}" >"$tmp"
+  mv -f "$tmp" "$file"          # 先写临时文件再改名, 中途断电不会毁掉旧历史
+}
+
+declare -A ACC4=() ACC6=()
+load_state "$STATE4" ACC4 "$RE_ADDR4"
+load_state "$STATE6" ACC6 "$RE_ADDR6"
+HIST4=${#ACC4[@]}
+HIST6=${#ACC6[@]}
+
+ADDED4=0
+for ip in "${!RUN4[@]}"; do [ "${ACC4[$ip]+x}" ] || ADDED4=$((ADDED4 + 1)); done
+ADDED6=0
+for ip in "${!RUN6[@]}"; do [ "${ACC6[$ip]+x}" ] || ADDED6=$((ADDED6 + 1)); done
+
+for ip in "${!RUN4[@]}"; do ACC4["$ip"]=1; done
+for ip in "${!RUN6[@]}"; do ACC6["$ip"]=1; done
+
+IPS4=( "${!ACC4[@]}" )
+IPS6=( "${!ACC6[@]}" )
+
+save_state "$STATE4" ACC4
+save_state "$STATE6" ACC6
+
+# 本轮颗粒无收但历史仍在: 用历史集合继续装载, 比空规则集安全得多
+if [ "${#RUN4[@]}" -eq 0 ] && [ "${#IPS4[@]}" -gt 0 ]; then
+  echo "[!] 本轮未解析到任何 IPv4, 退回历史累积的 ${#IPS4[@]} 个地址装载" >&2
+fi
+
+# 本轮与历史都为空才真的没法装载。注意此刻旧规则已被清空, 必须修复后重跑
 if [ "${#IPS4[@]}" -eq 0 ]; then
-  echo "[!] 未解析到任何 IPv4, 判定为 DNS 故障; 原有规则已被清空, 请修复 DNS 后立即重跑本脚本" >&2
+  echo "[!] 本轮与历史都没有任何 IPv4 地址, 无法装载白名单; 原有规则已被清空, 请立即重跑本脚本" >&2
   exit 1
 fi
 
-echo "[+] 解析得到 IPv4: ${#IPS4[@]} 个, IPv6: ${#IPS6[@]} 个"
+echo "[+] IPv4: 历史 ${HIST4} + 新增 ${ADDED4} = ${#IPS4[@]} 个"
+echo "[+] IPv6: 历史 ${HIST6} + 新增 ${ADDED6} = ${#IPS6[@]} 个, 重试后仍失败: ${#RETRY_FAILED[@]} 个"
 
 # 从这里开始装载白名单: 任何一步 iptables 失败都立即中止并大声报错,
 # 此时机器处于已清空状态, 需要人工立即重跑本脚本
