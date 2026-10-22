@@ -36,7 +36,6 @@ api.loj.ac
 api.w.org
 api.weibo.com
 api.wordpress.org
-app.bilibili.com
 app.mokahr.com
 app8092.acapp.acwing.com.cn
 apps.bdimg.com
@@ -162,6 +161,7 @@ dsalgo.openjudge.cn
 dsbpython.openjudge.cn
 dummyimage.com
 dxfjgc.openjudge.cn
+dzen.ru
 e.changyan.com
 e.huawei.com
 egoi.org
@@ -192,7 +192,6 @@ forms.yandex.ru
 furqansoftware.com
 g.alicdn.com
 g.changyan.com
-game.bilibili.com
 gesp.ccf.org.cn
 gesp.thusaac.com
 gespreg.ccf.org.cn
@@ -231,10 +230,6 @@ hxsjjg.openjudge.cn
 hydro.ac
 hydro.js.org
 hzoi.openjudge.cn
-i.ytimg.com
-i0.hdslb.com
-i1.hdslb.com
-i2.hdslb.com
 iai.sh.cn
 icb05.openjudge.cn
 ice-pub-media.myalicdn.com
@@ -286,10 +281,8 @@ livearchive.onlinejudge.org
 livemobile55.com
 login.sina.com.cn
 loj.ac
-m.bilibili.com
 m.iai.sh.cn
 m.vmall.com
-m.youtube.com
 maintainers.github.com
 makecode.microbit.org
 mathiasbynens.be
@@ -306,7 +299,6 @@ mths.be
 mts.ap-southeast-1.aliyuncs.com
 mts.cn-shanghai.aliyuncs.com
 mts.eu-central-1.aliyuncs.com
-music.bilibili.com
 mx.ymxa.cn
 mxoi.com.cn
 nanti.jisuanke.com
@@ -337,7 +329,6 @@ pagead2.googlesyndication.com
 pages.github.com
 partner.huawei.com
 pass.changyan.com
-passport.bilibili.com
 passport.ccf.org.cn
 passport.sinaimg.cn
 passport.weibo.cn
@@ -353,11 +344,11 @@ pkushusuan26271wly.openjudge.cn
 platform.twitter.com
 platform.x.com
 player.alicdn.com
-player.bilibili.com
 pmall.huawei.com
 poj.org
 popper.js.org
 px.ads.linkedin.com
+px4.ads.linkedin.com
 python.microbit.org
 qdacm.openjudge.cn
 qoj.ac
@@ -377,7 +368,6 @@ robotcc.tuanfushuo.com
 router.vuejs.org
 royqh.net
 rutube.ru
-s1.hdslb.com
 s3.amazonaws.com
 scs.sh.cn
 sdau.openjudge.cn
@@ -388,7 +378,6 @@ sendy.fsapp.co
 service.t.sina.com.cn
 services.google.com
 shared-assets.microbit.org
-show.bilibili.com
 silktide.com
 sio2.mimuw.edu.pl
 sites.google.com
@@ -405,7 +394,7 @@ sns-video-qn.xhscdn.com
 sns-webpic-qc.xhscdn.com
 socialimpact.github.com
 solar.huawei.com
-space.bilibili.com
+sso.passport.yandex.ru
 stackoverflow.com
 stackpath.bootstrapcdn.com
 stars.github.com
@@ -517,7 +506,6 @@ www.amazon.co.jp
 www.apache.org
 www.axureshow.com
 www.beian.gov.cn
-www.bilibili.com
 www.bootstraptoggle.com
 www.ccf.org.cn
 www.cgfan.com
@@ -532,7 +520,6 @@ www.cometoj.com
 www.daimaku.net
 www.ddgztc.com
 www.doubao.com
-www.douyin.com
 www.drupal.org
 www.dumate.cn
 www.e-olymp.com
@@ -599,7 +586,6 @@ www.tiktok.com
 www.timeanddate.com
 www.topcoder.com
 www.toutiao.com
-www.twitch.tv
 www.ubiquant.com
 www.udebug.com
 www.updream.cn
@@ -612,7 +598,6 @@ www.wlhcode.com
 www.xiaohongshu.com
 www.yixuexiao.cn
 www.youtube-nocookie.com
-www.youtube.com
 www.yunaq.com
 www.zhihu.com
 www.zhixue.com
@@ -628,7 +613,6 @@ yacs-public.oss-cn-hangzhou.aliyuncs.com
 yandex.ru
 yl.openjudge.cn
 yoast.com
-youtube.com
 yukicoder.me
 yukicoder.slack.com
 zcsyxx.openjudge.cn

@@ -51,6 +51,12 @@ IP 收录规则:
   域名解析得到的 IP 不收录 —— 该域名本身已进列表, 且 IP 随 DNS 漂移,
   按域名放行更可靠; 只收录"直接以 IP 访问"的地址(IP 字面量 URL)。
 
+娱乐视频黑名单:
+  脚本顶部 UNURLS 中的域名(含其子域名)即使被真实访问到也不写进白名单
+  —— 娱乐站常经被收录页面的外链 / 内嵌资源混进来, 不该因此获得放行;
+  与旧名单对比时这类条目也不记"丢失", 不会因排除它们触发缺席宽限或
+  采集故障误判。
+
 已知边界(脚本不是浏览器, 不会执行 JavaScript):
   * JS 运行时用变量拼接的域名只能靠模板+区域候选猜测命中一部分,
     拼接逻辑特殊的仍可能漏
@@ -173,6 +179,24 @@ NON_RESOURCE_HOSTS = ("w3.org", "xml.org", "purl.org", "schema.org",
                       "creativecommons.org", "opensource.org", "iana.org",
                       "example.com", "example.org", "ogp.me", "foo.bar")
 
+# 娱乐视频网站黑名单: 域名等于 UNURLS 条目或是条目子域名的不进白名单
+# (采集照常发生, 仅在输出前剔除, 见 main 里"黑名单排除")。条目写法决定
+# 粒度: 写注册域(iqiyi.com)整站连全部子域一并屏蔽; 写具体主机
+# (www.baidu.com)只屏蔽该主机, 同站其它服务(pan.baidu.com 等)不受牵连。
+UNURLS = {
+    "www.bilibili.com",                                # B 站主页
+    "bilibili.com", "bilivideo.com", "hdslb.com",      # B 站全站与视频/图床
+    "www.douyin.com", "douyin.com", "ixigua.com",      # 抖音/西瓜短视频
+    "v.qq.com",                                        # 腾讯视频
+    "youku.com", "iqiyi.com", "mgtv.com", "acfun.cn",  # 优酷/爱奇艺/芒果TV/A站
+    "haokan.baidu.com",                                # 好看视频(百度短视频)
+    "douyu.com", "huya.com", "twitch.tv",              # 游戏/秀场直播
+    "www.youtube.com", "youtube.com",                  # YouTube
+    "googlevideo.com", "ytimg.com",                    # YouTube 视频流/静态资源
+    "netflix.com",                                     # Netflix
+    "www.baidu.com",                                   # 仅百度主页
+}
+
 # 首页没带登录表单时依次探测的常见登录路径
 LOGIN_PATHS = ("/login", "/login/", "/login.html", "/login.php", "/signin",
                "/sign_in", "/users/sign_in", "/account/login", "/user/login/",
@@ -195,6 +219,12 @@ def site_key(url):
     if len(labels) >= 3 and ".".join(labels[-2:]) in TWO_PART_SUFFIXES:
         return ".".join(labels[-3:])
     return ".".join(labels[-2:]) if len(labels) >= 2 else host
+
+
+def in_unurls(host):
+    """域名是否命中娱乐视频黑名单: 等于条目或是条目的子域名。"""
+    host = (host or "").strip(".").lower()
+    return host in UNURLS or any(host.endswith("." + s) for s in UNURLS)
 
 
 # ====================================================================
@@ -1217,6 +1247,18 @@ def main(argv=None):
         for msg in probs:
             print(f"[*] 站点组 {k} 未采全: {msg}")
 
+    # 娱乐视频站黑名单: 真实访问到也不写进白名单(条目粒度见顶部 UNURLS
+    # 注释); 先剔除再走与旧名单的丢失对比, 被排除者不算丢失
+    blocked = {d for d in domains if in_unurls(d)}
+    if blocked:
+        # 必须原地删除: domains 是模块级集合, 写成 "domains -= blocked"
+        # 会让 Python 把整个 main() 里的 domains 判成局部变量, 前面
+        # domains.clear() 直接 UnboundLocalError
+        domains.difference_update(blocked)
+        more = f" ... 等共 {len(blocked)} 个" if len(blocked) > 20 else ""
+        print(f"[i] 娱乐视频黑名单排除 {len(blocked)} 个域名:"
+              f" {', '.join(sorted(blocked)[:20])}{more}")
+
     print("=" * 44)
     # IP 收录规则: 域名解析而来的 IP 不收录, 只保留直接以 IP 访问的地址
     final_ips = direct_ips - resolved_ips
@@ -1240,6 +1282,7 @@ def main(argv=None):
     meta = load_meta(meta_file)
     active_keys = set(order)
     lost = old_lines - (domains | final_ips)
+    lost -= {e for e in lost if in_unurls(e)}   # 黑名单条目不算丢失, 随写出剪除
     carry, cut_orphan, cut_gone, missing_new = set(), set(), set(), {}
     for e in sorted(lost):
         src = meta["sources"].get(e)
