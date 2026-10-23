@@ -22,6 +22,7 @@ addons.mozilla.org
 ade.googlesyndication.com
 adsense.com
 ai.pku.edu.cn
+ajwvhvgo.apicdn.sanity.io
 ajax.googleapis.com
 alivc-demo-cms.alicdn.com
 amzn.asia
@@ -84,6 +85,7 @@ cdn.menci.xyz
 cdn.prod.website-files.com
 cdn.thedesigninspiration.com
 cdn.uoj.ac
+cdn.sanity.io
 cdn.uptimerobot.com
 cdn.user.blog.st-hatena.com
 cdn.vjudge.net.cn
@@ -351,6 +353,7 @@ popper.js.org
 px.ads.linkedin.com
 px4.ads.linkedin.com
 python.microbit.org
+python-simulator.usermbit.org
 qdacm.openjudge.cn
 qoj.ac
 rainbow-sjy.blog.uoj.ac

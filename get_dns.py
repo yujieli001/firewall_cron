@@ -122,6 +122,7 @@ URLS = (
     "https://python.microbit.org/v/3",
     "https://python.microbit.org/v/3/ideas",
     "https://python.microbit.org/v/3/api",
+    "https://python-simulator.usermbit.org",
     ["https://www.mxoj.net/", "lizhenghan", "123456"],
     "https://mxoj.oss-cn-beijing.aliyuncs.com",
     ["https://www.iai.sh.cn","yujieli","nbyg2004"],
