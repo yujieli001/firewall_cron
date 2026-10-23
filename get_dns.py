@@ -123,6 +123,7 @@ URLS = (
     "https://python.microbit.org/v/3/ideas",
     "https://python.microbit.org/v/3/api",
     ["https://www.mxoj.net/", "lizhenghan", "123456"],
+    "https://mxoj.oss-cn-beijing.aliyuncs.com",
     ["https://www.iai.sh.cn","yujieli","nbyg2004"],
     "https://codeforces.com",
     "https://codeforces.com/problemset",

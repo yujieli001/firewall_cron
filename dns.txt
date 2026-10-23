@@ -301,6 +301,7 @@ mts.cn-shanghai.aliyuncs.com
 mts.eu-central-1.aliyuncs.com
 mx.ymxa.cn
 mxoi.com.cn
+mxoj.oss-cn-beijing.aliyuncs.com
 nanti.jisuanke.com
 nerc.itmo.ru
 new.bzoj.org
